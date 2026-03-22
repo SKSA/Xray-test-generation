@@ -20,7 +20,24 @@ Ask user: "What's your JIRA ticket number? (e.g., EPS-1234)"
 
 Read AC from: `.ac-verification/$TICKET/ac-checklist.md`
 
-### Step 2: Smart Selector Scan (Automatic)
+### Step 2: Choose Platform
+
+Ask user: "What platform are you testing?"
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Select Platform
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 🌐 Web (Browser-based)
+2. 📱 Mobile (React Native)
+
+Choose platform (1 or 2):
+```
+
+**Store platform choice for later steps.**
+
+### Step 3: Smart Selector Scan (Automatic)
 
 **Automatically scans YOUR IMPLEMENTED CODE for selectors:**
 
@@ -32,16 +49,30 @@ Display:
 ```
 
 Execute smart selector scan on your implementation:
+
+**For Web (Platform 1):**
 ```bash
 # Scans your actual code
-→ Scans src/ for data-testid, data-cy, testID, aria-label
+→ Scans src/ for data-testid, data-cy, aria-label
 → Finds selectors YOU added to your components
 → Builds selector map from YOUR code
 → Detects patterns and naming conventions
 → Identifies components you implemented
 ```
 
+**For Mobile React Native (Platform 2):**
+```bash
+# Scans your React Native code
+→ Scans src/ for testID props
+→ Finds testID YOU added to your RN components
+→ Builds selector map from YOUR code
+→ Detects React Native component patterns
+→ Identifies screens and navigators
+```
+
 Show results:
+
+**For Web:**
 ```
 ✅ Selector Scan Complete
 
@@ -57,14 +88,40 @@ Missing: 52 elements need selectors in your implementation
 Selector map saved: .ac-verification/selectors.json
 ```
 
+**For Mobile React Native:**
+```
+✅ Selector Scan Complete
+
+Found: 156 testIDs in your React Native code
+  • Buttons: 28
+  • TextInputs: 34
+  • Touchables: 42
+  • Screens: 8
+
+Quality: 78% coverage
+Missing: 38 elements need testID props
+
+Selector map saved: .ac-verification/selectors.json
+```
+
 If quality is low (<70%), warn:
+
+**For Web:**
 ```
 ⚠️ Selector coverage is low (52%)
 Your implementation is missing test selectors.
 Consider adding data-testid attributes to key elements.
 ```
 
-### Step 3: Scan Repository & Detect Stack
+**For Mobile React Native:**
+```
+⚠️ testID coverage is low (52%)
+Your React Native components are missing testID props.
+Consider adding testID to key components:
+<Button testID="submit-button" />
+```
+
+### Step 4: Scan Repository & Detect Stack
 
 Analyze codebase:
 
@@ -74,69 +131,82 @@ Analyze codebase:
 const deps = readPackageJson();
 
 // Detect framework
-if (deps.react) framework = 'React';
-if (deps.next) framework = 'Next.js';
-if (deps.vue) framework = 'Vue';
-if (deps['@angular/core']) framework = 'Angular';
-if (deps['react-native']) framework = 'React Native';
+if (deps['react-native']) {
+  framework = 'React Native';
+  platform = 'mobile';
+} else if (deps.react) {
+  framework = 'React';
+  platform = 'web';
+} else if (deps.next) {
+  framework = 'Next.js';
+  platform = 'web';
+} else if (deps.vue) {
+  framework = 'Vue';
+  platform = 'web';
+}
 
 // Detect existing test setup
 if (deps.playwright) testFrameworks.push('Playwright');
 if (deps.cypress) testFrameworks.push('Cypress');
-if (deps.jest) testFrameworks.push('Jest');
-if (deps.vitest) testFrameworks.push('Vitest');
-if (deps['@testing-library/react']) testFrameworks.push('RTL');
-```
-
-**Backend Detection:**
-```javascript
-// Detect backend
-if (deps.express || deps.fastify) backend = 'Node.js API';
-if (deps.django) backend = 'Django';
-if (deps.flask) backend = 'Flask';
-if (files.includes('go.mod')) backend = 'Go';
-if (files.includes('pom.xml')) backend = 'Java/Spring';
-
-// Detect API test tools
-if (deps.supertest) apiTools.push('Supertest');
-if (deps.axios) apiTools.push('Axios');
+if (deps.detox) testFrameworks.push('Detox');
+if (deps['@wdio/cli']) testFrameworks.push('Maestro');
 ```
 
 Display findings:
+
+**For Web:**
 ```
 📊 Repository Analysis
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+Platform: 🌐 Web
 Frontend: Next.js 14 (React, TypeScript)
 Backend: Node.js/Express API
-Database: PostgreSQL
 
 Installed Test Frameworks:
   ✅ Playwright (E2E)
   ✅ Jest (Unit/Integration)
-  ✅ React Testing Library (Component)
-  ✅ Supertest (API)
 
 Test Location: tests/
 Naming: *.spec.ts, *.test.ts
 Selectors: data-testid attributes (87% coverage)
 ```
 
-### Step 4: Choose Test Framework (User Selection)
+**For Mobile React Native:**
+```
+📊 Repository Analysis
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Platform: 📱 Mobile (React Native)
+Version: React Native 0.73
+TypeScript: Yes
+
+Installed Test Frameworks:
+  ⚠️ No mobile E2E framework detected
+
+Test Location: __tests__/
+Naming: *.test.tsx
+Selectors: testID props (78% coverage)
+Platforms: iOS, Android
+```
+
+### Step 5: Choose Test Framework (User Selection)
 
 Ask user: "Which test framework do you want to use?"
 
-**Show detected + recommended options:**
+**Show detected + recommended options based on platform:**
+
+**For Web (Platform 1):**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Select Test Framework
+Select Web Test Framework
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Detected in your project:
-  1. ✅ Playwright (installed)     - Recommended
-  2. ✅ Jest (installed)
-  3. ✅ Supertest (installed)
+  1. ✅ Playwright (installed)     - Recommended for E2E
+  2. ✅ Jest (installed)           - For unit tests
+  3. ✅ Supertest (installed)      - For API tests
 
 Not installed (available):
   4. Cypress - Alternative E2E
@@ -147,13 +217,41 @@ Choose one or more (comma separated):
 Example: 1,2,3 for Playwright + Jest + Supertest
 ```
 
+**For Mobile React Native (Platform 2):**
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Select Mobile Test Framework
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Recommended for React Native:
+  1. 🎯 Maestro (recommended)      - Simple YAML-based tests
+  2. Detox                        - Built for React Native
+  3. Appium                       - Cross-platform standard
+  4. React Native Testing Library - Component tests
+
+Detected in your project:
+  ✅ Jest (installed) - For unit tests
+
+Choose one or more (comma separated):
+Example: 1,4 for Maestro + React Native Testing Library
+```
+
 **Smart defaults based on detection:**
+
+For Web:
 - If Playwright installed → Default to Playwright
 - If Cypress installed → Default to Cypress  
 - If neither → Recommend Playwright (offer to install)
 
-**For each framework choice:**
+For Mobile React Native:
+- Always recommend Maestro first (simplest)
+- If Detox installed → Show as option
+- Suggest React Native Testing Library for component tests
 
+**For each framework choice, confirm:**
+
+**Web example:**
 ```
 You selected: Playwright + Jest + Supertest
 
@@ -161,6 +259,21 @@ Will generate:
   ✅ E2E tests (Playwright) - tests/e2e/
   ✅ Unit tests (Jest) - tests/unit/
   ✅ API tests (Supertest) - tests/api/
+
+Continue? (Y/n)
+```
+
+**Mobile React Native example:**
+```
+You selected: Maestro + React Native Testing Library
+
+Will generate:
+  ✅ E2E tests (Maestro) - .maestro/
+  ✅ Component tests (React Native Testing Library) - __tests__/
+
+Installation needed:
+  - Maestro: curl -Ls "https://get.maestro.mobile.dev" | bash
+  - @testing-library/react-native: npm install -D @testing-library/react-native
 
 Continue? (Y/n)
 ```
@@ -621,7 +734,118 @@ test('AC #1: Email input validation', async ({ page }) => {
 });
 ```
 
-### Step 8: Generate Test Configuration Files
+**B. For Mobile React Native - Maestro E2E Tests**
+
+Generate `.maestro/EPS-1234.yaml`:
+
+```yaml
+# AC Verification Tests for EPS-1234
+# Generated from acceptance criteria
+appId: com.yourapp
+
+---
+# AC #1: User can login with valid credentials
+- launchApp
+- tapOn:
+    id: "email-input"  # From selector scan: src/screens/LoginScreen.tsx:34
+- inputText: "test@example.com"
+- tapOn:
+    id: "password-input"  # From selector scan: src/screens/LoginScreen.tsx:42
+- inputText: "password123"
+- tapOn:
+    id: "login-button"  # From selector scan: src/screens/LoginScreen.tsx:50
+- assertVisible: "Welcome!"
+
+---
+# AC #2: User sees error with invalid email
+- launchApp
+- tapOn:
+    id: "email-input"
+- inputText: "invalid-email"
+- tapOn:
+    id: "login-button"
+- assertVisible:
+    id: "error-message"
+    text: "Invalid email format"
+```
+
+**C. For Mobile React Native - Detox Tests (Alternative)**
+
+Generate `e2e/EPS-1234.e2e.js`:
+
+```javascript
+// AC Verification Tests for EPS-1234
+describe('Login flow - EPS-1234', () => {
+  beforeAll(async () => {
+    await device.launchApp();
+  });
+
+  beforeEach(async () => {
+    await device.reloadReactNative();
+  });
+
+  // AC #1: User can login with valid credentials
+  it('should login successfully with valid credentials', async () => {
+    // Selector: email-input (found in src/screens/LoginScreen.tsx:34)
+    await element(by.id('email-input')).typeText('test@example.com');
+    
+    // Selector: password-input (found in src/screens/LoginScreen.tsx:42)
+    await element(by.id('password-input')).typeText('password123');
+    
+    // Selector: login-button (found in src/screens/LoginScreen.tsx:50)
+    await element(by.id('login-button')).tap();
+    
+    // Assert success
+    await expect(element(by.text('Welcome!'))).toBeVisible();
+  });
+
+  // AC #2: User sees error with invalid email
+  it('should show error for invalid email', async () => {
+    await element(by.id('email-input')).typeText('invalid-email');
+    await element(by.id('login-button')).tap();
+    
+    await expect(element(by.id('error-message'))).toBeVisible();
+    await expect(element(by.text('Invalid email format'))).toBeVisible();
+  });
+});
+```
+
+**D. For Mobile React Native - Component Tests**
+
+Generate `__tests__/LoginScreen.test.tsx`:
+
+```typescript
+// Component tests for EPS-1234
+import React from 'react';
+import { render, fireEvent } from '@testing-library/react-native';
+import LoginScreen from '../src/screens/LoginScreen';
+
+describe('LoginScreen - EPS-1234', () => {
+  // AC #1: User can enter credentials
+  it('should allow entering email and password', () => {
+    const { getByTestId } = render(<LoginScreen />);
+    
+    const emailInput = getByTestId('email-input');
+    const passwordInput = getByTestId('password-input');
+    
+    fireEvent.changeText(emailInput, 'test@example.com');
+    fireEvent.changeText(passwordInput, 'password123');
+    
+    expect(emailInput.props.value).toBe('test@example.com');
+    expect(passwordInput.props.value).toBe('password123');
+  });
+
+  // AC #2: Login button is disabled when form is invalid
+  it('should disable login button when form is invalid', () => {
+    const { getByTestId } = render(<LoginScreen />);
+    
+    const loginButton = getByTestId('login-button');
+    expect(loginButton.props.accessibilityState.disabled).toBe(true);
+  });
+});
+```
+
+### Step 9: Create Test Configuration Files
 
 #### playwright.config.ts
 ```typescript
@@ -728,9 +952,11 @@ npm run test:a11y
 
 ### Step 10: Display Summary
 
+**For Web:**
+
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎭 Tests Generated for EPS-1234
+🎭 Tests Generated for EPS-1234 (Web)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ✅ Selector Scan:
@@ -763,9 +989,53 @@ Total: 9 tests across 3 frameworks
 🚀 Next Steps:
 1. Review generated tests (check selector accuracy)
 2. Run tests: npx playwright test
-3. If selectors missing, run: /fix-selectors
+3. If selectors missing, add data-testid attributes
 4. Implement feature to pass tests
 5. Run: /verify-ac EPS-1234
+```
+
+**For Mobile React Native:**
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📱 Tests Generated for EPS-1234 (React Native)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ testID Scan:
+- Scanned: 89 files
+- Found: 156 testIDs
+- Quality: 78% coverage
+- Map: .ac-verification/selectors.json
+
+✅ Test Files Created:
+- .maestro/EPS-1234.yaml (5 flows) - Maestro E2E
+- __tests__/LoginScreen.test.tsx (4 tests) - Component
+- __tests__/validation.test.ts (2 tests) - Unit
+
+✅ Configuration:
+- .maestro/.config.yaml
+- jest.config.js (React Native preset)
+
+✅ Documentation:
+- .maestro/EPS-1234-README.md
+
+📊 Test Summary:
+Total: 11 tests across 3 types
+- E2E: 5 flows (Maestro) - Using real testIDs ✅
+- Component: 4 tests (React Native Testing Library)
+- Unit: 2 tests (Jest)
+
+🎯 AC Coverage: 100% (5/5 ACs covered)
+🎯 testID Quality: 78% (uses real testIDs from your components)
+
+🚀 Next Steps:
+1. Install Maestro: curl -Ls "https://get.maestro.mobile.dev" | bash
+2. Review generated tests
+3. Run E2E: maestro test .maestro/EPS-1234.yaml
+4. Run component tests: npm test
+5. If testIDs missing, add to your components:
+   <Button testID="login-button" />
+6. Run: /verify-ac EPS-1234
 ```
 
 ## Output Files
