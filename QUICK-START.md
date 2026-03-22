@@ -8,7 +8,7 @@
 
 | Command | Purpose | When to Use |
 |---------|---------|-------------|
-| `/start-task TICKET` | Create AC checklist | Start of every task |
+| `/collect-ac TICKET` | Create AC checklist | Start of every task |
 | `/generate-e2e-tests TICKET` | Generate Playwright tests | After coding (or before) |
 | `/verify-ac TICKET` | Verify AC testing status | Before creating PR |
 
@@ -18,7 +18,7 @@
 
 ```bash
 # 1. Start task
-/start-task EPS-1234
+/collect-ac EPS-1234
 # → Creates .ac-verification/EPS-1234/ac-checklist.md
 
 # 2. Code your feature
@@ -119,7 +119,7 @@ cp -r /Users/mde/Documents/spectest/.claude/commands/* \
 Or add to `spec-machine.config.yml`:
 ```yaml
 commands:
-  - name: /start-task
+  - name: /collect-ac
   - name: /verify-ac
   - name: /generate-e2e-tests
 ```
@@ -130,7 +130,7 @@ commands:
 
 | Problem | Solution |
 |---------|----------|
-| "No AC checklist found" | Run `/start-task` first |
+| "No AC checklist found" | Run `/collect-ac` first |
 | "JIRA CLI not found" | Enter ACs manually |
 | Tests failing | Review selectors, run `npx playwright test --debug` |
 | Can't create PR | Fix failing ACs, run `/verify-ac` again |
@@ -146,7 +146,7 @@ See: `AC-WORKFLOW-README.md` for complete guide
 **Commands stored at:**
 ```
 /Users/mde/Documents/spectest/.claude/commands/
-├── start-task/start-task.md
+├── collect-ac/collect-ac.md
 ├── verify-ac/verify-ac.md
 └── generate-e2e-tests/generate-e2e-tests.md
 ```

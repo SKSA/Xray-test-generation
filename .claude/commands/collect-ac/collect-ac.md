@@ -1,14 +1,14 @@
 ---
-name: /start-task
+name: /collect-ac
 argument-hint: '[JIRA-TICKET]'
-description: Start task with AC entry from JIRA, Confluence, or manual input
+description: Collect acceptance criteria from JIRA, Confluence, and Figma
 mode: single-agent
 dependencies:
   - jira CLI (optional)
   - Confluence MCP (optional)
 ---
 
-# Start Task with Acceptance Criteria (Enhanced)
+# Collect Acceptance Criteria
 
 ## Purpose
 Initialize a task by intelligently fetching acceptance criteria from multiple sources: JIRA tickets, Confluence pages, Google Docs, or manual entry. Uses smart AC detection to parse various formats.

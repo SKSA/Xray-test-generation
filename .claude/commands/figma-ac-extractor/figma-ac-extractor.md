@@ -457,7 +457,7 @@ Testable: 21/23 (91%)
 
 ### Step 7: Merge with Existing ACs
 
-If `/start-task` already ran:
+If `/collect-ac` already ran:
 
 ```
 Found existing ACs from JIRA ticket EPS-1234.
@@ -600,7 +600,7 @@ for (const component of components) {
 ## Integration
 
 This integrates with:
-- `/start-task` - Merge Figma ACs with JIRA ACs
+- `/collect-ac` - Merge Figma ACs with JIRA ACs
 - `/generate-e2e-tests` - Add visual regression tests
 - `/verify-ac` - Include visual verification
 - Design system tools - Validate design token usage

@@ -8,7 +8,7 @@
 
 This workflow adds three custom commands to spec-machine that enforce AC testing before pull requests:
 
-1. **`/start-task`** - Initialize task with acceptance criteria
+1. **`/collect-ac`** - Initialize task with acceptance criteria
 2. **`/generate-e2e-tests`** - Generate Playwright tests from ACs
 3. **`/verify-ac`** - Verify AC testing status before PR
 
@@ -41,8 +41,8 @@ This workflow adds three custom commands to spec-machine that enforce AC testing
 The commands are located in:
 ```
 /Users/mde/Documents/spectest/.claude/commands/
-├── start-task/
-│   └── start-task.md
+├── collect-ac/
+│   └── collect-ac.md
 ├── verify-ac/
 │   └── verify-ac.md
 └── generate-e2e-tests/
@@ -57,8 +57,8 @@ cp -r /Users/mde/Documents/spectest/.claude/commands/* your-repo/.claude/command
 Or install via spec-machine config (add to `spec-machine.config.yml`):
 ```yaml
 commands:
-  - name: /start-task
-    path: .claude/commands/start-task/start-task.md
+  - name: /collect-ac
+    path: .claude/commands/collect-ac/collect-ac.md
   - name: /verify-ac
     path: .claude/commands/verify-ac/verify-ac.md
   - name: /generate-e2e-tests
@@ -76,7 +76,7 @@ commands:
 # STEP 1: START TASK
 # ========================================
 
-/start-task EPS-1234
+/collect-ac EPS-1234
 
 # What happens:
 # - Fetches ticket from JIRA (or asks you to enter manually)
@@ -226,7 +226,7 @@ your-repo/
 │
 └── .claude/
     └── commands/
-        ├── start-task/
+        ├── collect-ac/
         ├── verify-ac/
         └── generate-e2e-tests/
 ```
@@ -235,13 +235,13 @@ your-repo/
 
 ## 🎯 Command Details
 
-### `/start-task [TICKET-ID]`
+### `/collect-ac [TICKET-ID]`
 
 **Purpose:** Initialize task with acceptance criteria
 
 **Usage:**
 ```bash
-/start-task EPS-1234
+/collect-ac EPS-1234
 ```
 
 **What it does:**
@@ -340,7 +340,7 @@ your-repo/
 
 ### For Developers
 
-1. **Always run `/start-task` first**
+1. **Always run `/collect-ac` first**
    - Establishes clear AC baseline
    - Creates tracking structure
    - No excuses for missing ACs
@@ -431,7 +431,7 @@ Generated tests will use your existing config.
 
 ```bash
 # Start
-/start-task EPS-1234
+/collect-ac EPS-1234
 
 # Code the feature
 # ... implement email service ...
@@ -470,7 +470,7 @@ gh pr create
 
 **Problem:** Trying to verify before creating checklist
 
-**Solution:** Run `/start-task` first
+**Solution:** Run `/collect-ac` first
 
 ### "JIRA CLI not found"
 
@@ -514,7 +514,7 @@ This workflow integrates seamlessly:
 /create-tasks
 
 # Add AC workflow
-/start-task EPS-1234        # ← NEW
+/collect-ac EPS-1234        # ← NEW
 /implement-task 1
 /implement-task 2
 /generate-e2e-tests EPS-1234  # ← NEW
@@ -594,7 +594,7 @@ jobs:
 
 ### Custom AC Formats
 
-Edit AC prompts in `/start-task` command file to support your format:
+Edit AC prompts in `/collect-ac` command file to support your format:
 - User story format
 - BDD Gherkin
 - Custom templates
@@ -624,7 +624,7 @@ grep -r "Tested and PASSED" .ac-verification/ | wc -l
 ## 📝 Summary
 
 **Three Commands:**
-1. `/start-task` - Start with ACs
+1. `/collect-ac` - Start with ACs
 2. `/generate-e2e-tests` - Auto-generate tests
 3. `/verify-ac` - Verify before PR
 

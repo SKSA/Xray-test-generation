@@ -45,7 +45,7 @@ Restart Claude Code to load the new commands.
 
 ```bash
 # In Claude Code chat
-/start-task EPS-1234
+/collect-ac EPS-1234
 ```
 
 That's it! 🎉
@@ -56,7 +56,7 @@ That's it! 🎉
 
 | Command | Description |
 |---------|-------------|
-| `/start-task` | Start a task by fetching ACs from JIRA, Confluence, and Figma |
+| `/collect-ac` | Collect acceptance criteria from JIRA, Confluence, and Figma |
 | `/generate-e2e-tests` | Generate automated tests (Playwright, Cypress, Jest, etc.) |
 | `/verify-ac` | Interactively verify each acceptance criterion |
 | `/post-to-jira` | Post verification results to JIRA ticket (auto-prompted after verify) |
@@ -69,8 +69,8 @@ That's it! 🎉
 ## 🔄 Complete Workflow
 
 ```bash
-# 1️⃣ Start with a ticket
-/start-task EPS-1234
+# 1️⃣ Collect acceptance criteria
+/collect-ac EPS-1234
 → Fetches ACs from JIRA + Confluence + Figma
 → Smart detection with confidence scoring
 → Creates AC checklist
@@ -234,7 +234,7 @@ Tracks across sprints:
 ### Example 1: Simple Feature
 
 ```bash
-/start-task EPS-5678
+/collect-ac EPS-5678
 → Found 3 ACs from JIRA
 
 /generate-e2e-tests EPS-5678
@@ -252,7 +252,7 @@ Tracks across sprints:
 ### Example 2: Complex Flow with Figma
 
 ```bash
-/start-task EPS-9012
+/collect-ac EPS-9012
 → Found 5 ACs from JIRA + Confluence
 
 /figma-ac-extractor https://figma.com/design/abc123
@@ -353,4 +353,4 @@ Created by the Platform Engineering team to streamline QA workflows across Hello
 
 ---
 
-**Ready to automate your QA workflow?** Get started with `/start-task` today! 🚀
+**Ready to automate your QA workflow?** Get started with `/collect-ac` today! 🚀

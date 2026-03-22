@@ -58,7 +58,7 @@ Based on your feedback, I've updated the workflow:
 # STEP 1: Start Task
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-/start-task EPS-1234
+/collect-ac EPS-1234
 → Fetches from JIRA + Confluence + Figma
 → Smart AC detection
 → Creates AC checklist
@@ -154,14 +154,14 @@ gh pr create
 ### **Simplified:**
 ```
 Before: 5 separate commands
-/start-task
+/collect-ac
 /smart-selector-scan     ← Manual
 /generate-e2e-tests
 /verify-ac
 /post-to-jira            ← Manual
 
 After: 3 commands
-/start-task
+/collect-ac
 /generate-e2e-tests      ← Includes selector scan
 /verify-ac               ← Includes JIRA post prompt
 ```
@@ -172,7 +172,7 @@ After: 3 commands
 
 ### **Minimal Workflow:**
 ```bash
-/start-task EPS-1234
+/collect-ac EPS-1234
 # → Multi-source AC detection
 
 /generate-e2e-tests EPS-1234
@@ -190,7 +190,7 @@ After: 3 commands
 ### **Full Workflow with All Features:**
 ```bash
 # 1. Start with ACs
-/start-task EPS-1234
+/collect-ac EPS-1234
 
 # 2. Optional: Add Figma specs
 /figma-ac-extractor https://figma.com/...
@@ -293,7 +293,7 @@ New: "Just 3 commands, rest is automatic"
 - `.claude/commands/generate-e2e-tests/generate-e2e-tests.md`
 
 **Unchanged:**
-- `/start-task` - Already has multi-source detection
+- `/collect-ac` - Already has multi-source detection
 - `/post-to-jira` - Still available standalone
 - `/smart-selector-scan` - Still available if needed
 - `/figma-ac-extractor` - Optional enhancement
@@ -313,7 +313,7 @@ All changes applied! The workflow is now:
 Try it:
 ```bash
 cd /Users/mde/Documents/spectest
-/start-task EPS-1234
+/collect-ac EPS-1234
 /generate-e2e-tests EPS-1234  # ← Now includes selector scan
 /verify-ac EPS-1234           # ← Now prompts for JIRA
 ```

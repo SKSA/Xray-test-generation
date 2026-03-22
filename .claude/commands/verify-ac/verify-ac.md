@@ -21,7 +21,7 @@ Store as `$TICKET`
 Read AC checklist from: `.ac-verification/$TICKET/ac-checklist.md`
 
 If file doesn't exist:
-- Error: "No AC checklist found for $TICKET. Run /start-task first."
+- Error: "No AC checklist found for $TICKET. Run /collect-ac first."
 - Exit
 
 ### Step 2: Display Current Status

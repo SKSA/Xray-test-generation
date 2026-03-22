@@ -162,7 +162,7 @@ if (!visualKeywords.some(k => note.includes(k))) {
 
 ```bash
 # Step 1: Get functional ACs from JIRA
-/start-task EPS-1234
+/collect-ac EPS-1234
 → Fetches business requirements
 
 # Step 2: Add user flow ACs from Figma

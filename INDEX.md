@@ -29,11 +29,11 @@
 Located in: `.claude/commands/`
 
 ### 1. Start Task Command
-**File:** `.claude/commands/start-task/start-task.md`
+**File:** `.claude/commands/collect-ac/collect-ac.md`
 
 **Purpose:** Initialize task with acceptance criteria
 
-**Usage:** `/start-task TICKET-ID`
+**Usage:** `/collect-ac TICKET-ID`
 
 **Creates:**
 - `.ac-verification/TICKET-ID/ac-checklist.md`
@@ -82,7 +82,7 @@ cp -r /Users/mde/Documents/spectest/.claude/commands \
       your-repo/.claude/
 
 # 2. Use in spec-machine
-/start-task EPS-1234
+/collect-ac EPS-1234
 /generate-e2e-tests EPS-1234
 /verify-ac EPS-1234
 
@@ -104,8 +104,8 @@ gh pr create
 │
 ├── ⚙️ Commands
 │   └── .claude/commands/
-│       ├── start-task/
-│       │   └── start-task.md
+│       ├── collect-ac/
+│       │   └── collect-ac.md
 │       ├── verify-ac/
 │       │   └── verify-ac.md
 │       └── generate-e2e-tests/
@@ -131,7 +131,7 @@ gh pr create
 ```
 ┌──────────────────────────────────────────────────┐
 │                                                  │
-│  1. /start-task TICKET                          │
+│  1. /collect-ac TICKET                          │
 │     → Creates AC checklist                       │
 │                                                  │
 │  2. CODE YOUR FEATURE                            │
@@ -184,7 +184,7 @@ gh pr create
    ```bash
    cp -r .claude/commands your-repo/.claude/
    cd your-repo
-   /start-task YOUR-TICKET
+   /collect-ac YOUR-TICKET
    ```
 
 3. **Integrate with CI/CD:**

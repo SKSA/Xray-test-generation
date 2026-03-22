@@ -16,14 +16,14 @@ You requested **8 major improvements** - **ALL ARE COMPLETE**!
 - Adds labels: "ac-verified", "e2e-tested"
 
 ### **2. Confluence Integration** ✅
-**Enhanced:** `/start-task`
+**Enhanced:** `/collect-ac`
 - Fetches ACs from linked Confluence pages
 - Parses lists, tables, headers, panels
 - Maintains source links
 - Smart format detection
 
 ### **3. Smart AC Detection** ✅
-**Enhanced:** `/start-task`
+**Enhanced:** `/collect-ac`
 - Detects multiple AC formats (BDD, lists, tables)
 - Pulls from JIRA, Confluence, Google Docs
 - Confidence scoring
@@ -83,7 +83,7 @@ You requested **8 major improvements** - **ALL ARE COMPLETE**!
 
 ```
 Commands:
-├── /start-task                (382 lines) ENHANCED ⭐
+├── /collect-ac                (382 lines) ENHANCED ⭐
 ├── /verify-ac                 (170 lines)
 ├── /generate-e2e-tests        (628 lines) ENHANCED ⭐
 ├── /post-to-jira              (297 lines) NEW 🆕
@@ -108,7 +108,7 @@ Documentation:
 
 ```bash
 # 1. Multi-source AC detection
-/start-task EPS-1234
+/collect-ac EPS-1234
 # → JIRA + Confluence + Comments
 # → Smart parsing
 # → Confidence scoring
@@ -304,7 +304,7 @@ Everything is implemented and documented. To use:
 
 2. **Start using:**
    ```bash
-   /start-task EPS-1234
+   /collect-ac EPS-1234
    ```
 
 3. **Read docs:**

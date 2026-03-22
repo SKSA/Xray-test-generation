@@ -20,7 +20,7 @@ You requested these improvements - all are now implemented:
 ## 📦 All Commands (v2.0)
 
 ### **Core Workflow** (Original)
-1. **`/start-task`** - Start with ACs (ENHANCED ⭐)
+1. **`/collect-ac`** - Start with ACs (ENHANCED ⭐)
 2. **`/generate-e2e-tests`** - Generate tests (ENHANCED ⭐)
 3. **`/verify-ac`** - Verify before PR
 
@@ -33,7 +33,7 @@ You requested these improvements - all are now implemented:
 
 ---
 
-## 🚀 Enhanced `/start-task` Features
+## 🚀 Enhanced `/collect-ac` Features
 
 ### **Smart AC Detection** (Multi-Source)
 
@@ -423,7 +423,7 @@ test('AC-V3: Button background color', async ({ page }) => {
 
 **Merges with JIRA ACs:**
 ```
-/start-task EPS-1234
+/collect-ac EPS-1234
 → Fetches 4 functional ACs from JIRA
 
 /figma-ac-extractor https://figma.com/...
@@ -562,7 +562,7 @@ Opportunities:
 
 ```bash
 # 1. Start with multi-source ACs
-/start-task EPS-1234
+/collect-ac EPS-1234
 → Fetches from JIRA + Confluence
 → Smart detection
 → Creates AC checklist
@@ -683,7 +683,7 @@ your-repo/
 All commands stored at:
 ```
 /Users/mde/Documents/spectest/.claude/commands/
-├── start-task/             (ENHANCED)
+├── collect-ac/             (ENHANCED)
 ├── verify-ac/
 ├── generate-e2e-tests/     (ENHANCED)
 ├── post-to-jira/           (NEW)
@@ -709,8 +709,8 @@ Documentation at:
 **All Requested Features: COMPLETE** ✅
 
 ✅ A. Post Results Back to JIRA - `/post-to-jira`
-✅ B. Confluence Integration - Enhanced `/start-task`
-✅ C. Smart AC Detection - Enhanced `/start-task`
+✅ B. Confluence Integration - Enhanced `/collect-ac`
+✅ C. Smart AC Detection - Enhanced `/collect-ac`
 ✅ Multi-Framework Support - Enhanced `/generate-e2e-tests`
 ✅ API Test Generation - Enhanced `/generate-e2e-tests`
 ✅ Figma Integration - `/figma-ac-extractor`
@@ -724,5 +724,5 @@ Documentation at:
 Start with:
 ```bash
 cd /Users/mde/Documents/spectest
-/start-task EPS-1234
+/collect-ac EPS-1234
 ```

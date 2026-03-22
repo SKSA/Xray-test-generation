@@ -26,7 +26,7 @@ This creates `ac-workflow-commands.zip` containing:
    unzip ac-workflow-commands.zip
    ```
 3. Restart Claude Code
-4. Commands appear: `/start-task`, `/verify-ac`, `/generate-e2e-tests`, etc.
+4. Commands appear: `/collect-ac`, `/verify-ac`, `/generate-e2e-tests`, etc.
 
 ---
 
@@ -159,7 +159,7 @@ Restart Claude Code to load new commands
 
 ### 4. Verify installation
 In Claude chat, type:
-/start-task
+/collect-ac
 
 You should see the command available!
 
@@ -169,7 +169,7 @@ You should see the command available!
 - Install Playwright: npm install -D @playwright/test
 
 ## Available Commands
-- /start-task - Start with ACs
+- /collect-ac - Start with ACs
 - /generate-e2e-tests - Generate tests
 - /verify-ac - Verify ACs
 - /post-to-jira - Post results
@@ -214,7 +214,7 @@ Questions? Ping me or check the README!
 ## 📊 What Gets Shared
 
 ### **Commands (`.claude/commands/`):**
-1. `start-task/start-task.md` - Multi-source AC detection
+1. `collect-ac/collect-ac.md` - Multi-source AC detection
 2. `verify-ac/verify-ac.md` - Interactive AC verification
 3. `generate-e2e-tests/generate-e2e-tests.md` - E2E test generation
 4. `post-to-jira/post-to-jira.md` - JIRA integration
@@ -258,7 +258,7 @@ jira init
 ### **4. Test It**
 ```bash
 # In Claude Code chat
-/start-task EPS-1234
+/collect-ac EPS-1234
 ```
 
 ---
