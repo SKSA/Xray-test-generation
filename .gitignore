@@ -41,8 +41,4 @@ tmp/
 *.tmp
 
 # Project-specific
-spec-machine/config.yml
-specs/
-tests/google-homepage.spec.ts
-playwright.config.ts
-package.json
+spec-machine/

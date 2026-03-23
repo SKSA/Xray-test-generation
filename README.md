@@ -207,7 +207,7 @@ Tracks across sprints:
 ## 📦 What's Included
 
 ### Commands
-- `start-task/` - Multi-source AC fetching
+- `collect-ac/` - Multi-source AC fetching
 - `verify-ac/` - Interactive verification
 - `generate-e2e-tests/` - Test generation
 - `post-to-jira/` - JIRA integration
@@ -217,13 +217,13 @@ Tracks across sprints:
 
 ### Documentation
 - `README.md` - This file
-- `QUICK-START.md` - 5-minute guide
-- `AC-WORKFLOW-README.md` - Complete workflow guide
-- `WORKFLOW-UPDATES-V2.1.md` - Latest changes
-- `IMPROVEMENTS-V2.md` - Feature descriptions
-- `FIGMA-AC-FOCUS.md` - Figma usage guide
-- `INDEX.md` - Navigation guide
-- `HOW-TO-SHARE.md` - Sharing guide
+- `CHANGELOG.md` - Version history and updates
+- `docs/QUICK-START.md` - 5-minute guide
+- `docs/AC-WORKFLOW-README.md` - Complete workflow guide
+- `docs/IMPROVEMENTS-V2.md` - Feature descriptions
+- `docs/FIGMA-AC-FOCUS.md` - Figma usage guide
+- `docs/INDEX.md` - Navigation guide
+- `docs/HOW-TO-SHARE.md` - Sharing guide
 
 ---
 
@@ -253,12 +253,12 @@ Tracks across sprints:
 
 ## 📚 Documentation
 
-- **[Quick Start](QUICK-START.md)** - Get started in 5 minutes
-- **[Complete Workflow Guide](AC-WORKFLOW-README.md)** - Detailed workflow documentation
-- **[Latest Updates](WORKFLOW-UPDATES-V2.1.md)** - What's new in v2.1
-- **[Feature Descriptions](IMPROVEMENTS-V2.md)** - Deep dive into features
-- **[Figma Integration](FIGMA-AC-FOCUS.md)** - How Figma extraction works
-- **[Full Index](INDEX.md)** - Navigate all documentation
+- **[Quick Start](docs/QUICK-START.md)** - Get started in 5 minutes
+- **[Complete Workflow Guide](docs/AC-WORKFLOW-README.md)** - Detailed workflow documentation
+- **[Latest Updates](CHANGELOG.md)** - What's new in v2.1
+- **[Feature Descriptions](docs/IMPROVEMENTS-V2.md)** - Deep dive into features
+- **[Figma Integration](docs/FIGMA-AC-FOCUS.md)** - How Figma extraction works
+- **[Full Index](docs/INDEX.md)** - Navigate all documentation
 
 ---
 
