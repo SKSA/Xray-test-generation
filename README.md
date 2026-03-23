@@ -367,12 +367,3 @@ Found a bug? Have a suggestion? Want to add a feature?
 1. Create an issue
 2. Submit a PR
 3. Share feedback in #spec-dev-qa-assistant
-
----
-
-## 📞 Support
-
-- **Slack:** #spec-dev-qa-assistant (coming soon)
-- **Issues:** https://github.com/mde-hf/spec-dev-qa-assistant/issues
-- **Docs:** See documentation files in repo
-- **Questions:** Tag @mde-hf in Slack
