@@ -12,9 +12,50 @@ Generate automated tests from acceptance criteria based on your code implementat
 
 **⚠️ Important:** Run this AFTER implementing your feature, not before. The command scans your code to generate accurate tests.
 
+## Prerequisites
+
+Check dependencies before first use:
+```bash
+/setup-qa-assistant
+→ Checks for Playwright/Cypress/Maestro
+→ Offers to install missing frameworks
+```
+
 ## Workflow
 
-### Step 1: Load Acceptance Criteria
+### Step 1: Check Dependencies (Automatic)
+
+Before generating tests, check if required tools are installed:
+
+```bash
+# Check for test frameworks based on platform choice
+if platform == "web":
+  check_playwright_or_cypress()
+elif platform == "mobile":
+  check_maestro_or_detox()
+
+# If missing, prompt user
+if missing_frameworks:
+  display_missing_message()
+  ask_to_install()
+```
+
+**Example prompt:**
+```
+⚠️ Missing Dependencies Detected
+
+For Web E2E testing, you need one of:
+  ❌ Playwright - Not installed
+  ❌ Cypress - Not installed
+
+Would you like me to install Playwright? (Y/n)
+
+If yes:
+  npm install -D @playwright/test
+  npx playwright install
+```
+
+### Step 2: Load Acceptance Criteria
 
 Ask user: "What's your JIRA ticket number? (e.g., EPS-1234)"
 
