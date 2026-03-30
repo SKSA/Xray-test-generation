@@ -57,6 +57,7 @@ That's it! 🎉
 | Command | Description |
 |---------|-------------|
 | `/collect-ac` | Collect acceptance criteria from JIRA, Confluence, and Figma |
+| `/create-xray-tests` | Generate test cases in X-Ray from ACs (BDD or Manual format) |
 | `/generate-e2e-tests` | Generate automated tests (Web: Playwright/Cypress, Mobile: Maestro/Detox) |
 | `/verify-ac` | Interactively verify each acceptance criterion |
 | `/post-to-jira` | Post verification results to JIRA ticket (auto-prompted after verify) |
@@ -101,39 +102,46 @@ That's it! 🎉
 → Extracts user flows and interactions
 → Merges with existing ACs
 
-# 3️⃣ Create branch (if not already)
+# 3️⃣ (Optional) Create X-Ray test cases
+/create-xray-tests EPS-1234
+→ Choose format: BDD or Manual Test Steps
+→ Generate test cases from ACs
+→ Create X-Ray Test issues in JIRA
+→ Link tests to story
+
+# 4️⃣ Create branch (if not already)
 git checkout -b feature/EPS-1234-description
 
-# 4️⃣ Implement your feature
+# 5️⃣ Implement your feature
 # ... write your code ...
 # Build the feature according to ACs
 
-# 5️⃣ Generate tests for your implementation
+# 6️⃣ Generate tests for your implementation
 /generate-e2e-tests EPS-1234
 → Select platform: Web or Mobile React Native
 → Auto scans for selectors in your code
 → Choose framework (Playwright/Maestro/etc.)
 → Generates tests based on your implementation + ACs
 
-# 6️⃣ Run tests
+# 7️⃣ Run tests
 npx playwright test                     # Web
 # or
 maestro test .maestro/EPS-1234.yaml     # React Native
 
-# 7️⃣ Verify ACs
+# 8️⃣ Verify ACs
 /verify-ac EPS-1234
 → Interactive verification
 → Test status tracking
 → Asks: "Post to JIRA?" → Auto-posts results
 
-# 8️⃣ Create PR with full context
+# 9️⃣ Create PR with full context
 /create-pr  # spec-machine: Creates PR with JIRA link, labels, template
 → Links JIRA ticket automatically
 → Uses repo's PR template
 → Applies correct labels
 → Follows team conventions
 
-# 9️⃣ (End of sprint) Track quality
+# 🔟 (End of sprint) Track quality
 /ac-quality-trends --sprint "Sprint 24"
 → See pass rates, velocity, issues
 → Developer leaderboard
