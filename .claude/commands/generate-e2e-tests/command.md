@@ -144,7 +144,90 @@ Store as `$TEST_DESCRIPTION`
 
 If blank, will auto-analyze component for test scenarios.
 
-### Step 3: Choose Platform
+### Step 3: Auto-Detect Platform and Frameworks
+
+**Automatically detect platform and available frameworks:**
+
+```bash
+# Check package.json
+const deps = readPackageJson();
+
+# Detect platform
+if (deps['react-native']) {
+  detectedPlatform = 'Mobile (React Native)';
+} else if (deps.react || deps.next) {
+  detectedPlatform = 'Web (React/Next.js)';
+}
+
+# Detect existing test frameworks
+detectedFrameworks = [];
+if (deps.playwright) detectedFrameworks.push('Playwright');
+if (deps.cypress) detectedFrameworks.push('Cypress');
+if (deps.jest) detectedFrameworks.push('Jest');
+if (deps.detox) detectedFrameworks.push('Detox');
+if (deps['@testing-library/react']) detectedFrameworks.push('React Testing Library');
+```
+
+**Display auto-detected settings:**
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 Auto-Detected Settings
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Platform: 🌐 Web (React/Next.js)
+
+Detected Test Frameworks:
+  ✅ Playwright 1.54.0 (E2E tests)
+  ✅ Jest 30.2.0 (Unit/Component tests)
+  ✅ Cypress 15.4.0 (E2E alternative)
+  ✅ React Testing Library (Component tests)
+
+Recommended for this component:
+  → Jest + React Testing Library
+  (Matches existing test patterns in this feature)
+```
+
+### Step 4: Ask User - Auto or Manual?
+
+**Ask user if they want to use auto-detected settings or choose manually:**
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚙️ Test Configuration
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Do you want to use auto-detected settings or choose manually?
+
+1. 🤖 Auto (Recommended)
+   Use detected settings: Web + Jest + React Testing Library
+   
+2. ✋ Manual
+   Choose platform and frameworks yourself
+
+Choose option (1 or 2):
+```
+
+**If user selects "1. Auto (Recommended)":**
+- Use auto-detected platform
+- Use auto-detected/recommended frameworks
+- Skip to Step 7 (Generate Tests)
+- Display confirmation:
+  ```
+  ✅ Using auto-detected settings:
+     Platform: Web
+     Frameworks: Jest + React Testing Library
+  
+  Generating tests...
+  ```
+
+**If user selects "2. Manual":**
+- Proceed to Step 5 (Manual Platform Selection)
+- Then Step 6 (Manual Framework Selection)
+
+### Step 5: Manual Platform Selection (Only if user chose Manual)
+
+**This step is SKIPPED if user chose "Auto" in Step 4.**
 
 **Ask for platform:**
 
@@ -155,7 +238,7 @@ If blank, will auto-analyze component for test scenarios.
 
 What platform are you testing?
 
-1. 🌐 Web (Browser-based applications) ⭐ Recommended
+1. 🌐 Web (Browser-based applications)
    Frameworks: Playwright, Cypress, Jest, Vitest
    
 2. 📱 Mobile (React Native)
@@ -166,9 +249,11 @@ Choose platform (1 or 2):
 
 **Store platform choice:** `PLATFORM = "web" or "mobile"`
 
-### Step 4: Choose E2E Technology/Framework
+### Step 6: Manual Framework Selection (Only if user chose Manual)
 
-**Based on platform selected in Step 3, show framework options:**
+**This step is SKIPPED if user chose "Auto" in Step 4.**
+
+**Based on platform selected in Step 5, show framework options:**
 
 **If Web (Platform 1):**
 
@@ -182,12 +267,12 @@ Which technology do you want to use for E2E test generation?
 Detected in your project:
   1. ✅ Playwright (installed)     - Recommended for E2E ⭐
   2. ✅ Jest (installed)           - For unit tests
-  3. ✅ Supertest (installed)      - For API tests
+  3. ✅ React Testing Library (installed) - Component tests
+  4. ✅ Cypress (installed)        - E2E alternative
 
 Not installed (available):
-  4. Cypress - Alternative E2E framework
   5. Vitest - Modern unit testing
-  6. React Testing Library - Component tests
+  6. Supertest - API tests
 
 Choose framework (comma separated for multiple):
 Example: 1,2 for Playwright + Jest
@@ -221,13 +306,13 @@ Example: 1,5 for Maestro + React Native Testing Library
 You selected: Playwright + Jest
 
 Will generate:
-  ✅ E2E tests (Playwright) - tests/e2e/PremiumMealsActiveRewardCard.spec.ts
-  ✅ Unit tests (Jest) - tests/unit/PremiumMealsActiveRewardCard.test.ts
+  ✅ E2E tests (Playwright) - tests/e2e/BoxDiscountActiveRewardCard.spec.ts
+  ✅ Unit tests (Jest) - tests/unit/BoxDiscountActiveRewardCard.test.ts
 
 Continue? (Y/n)
 ```
 
-### Step 5: Smart Selector Scan (Automatic)
+### Step 7: Smart Selector Scan (Automatic)
 
 **Automatically scans YOUR IMPLEMENTED CODE for selectors:**
 
@@ -311,7 +396,7 @@ Consider adding testID to key components:
 <Button testID="submit-button" />
 ```
 
-### Step 6: Generate Tests
+### Step 8: Generate Tests
 
 Based on what was entered in Step 2:
 
@@ -411,352 +496,48 @@ Consider adding testID to key components:
 <Button testID="submit-button" />
 ```
 
-### Step 6: Scan Repository & Detect Stack
+### Step 8: Generate Tests
 
-Analyze codebase:
+Based on what was entered in Step 2 and settings from Steps 3-6:
 
-**Frontend Detection:**
-```javascript
-// Check package.json
-const deps = readPackageJson();
+**If Component (e.g., "BoxDiscountActiveRewardCard.tsx"):**
+- Use component analysis + test description (if provided)
+- Use selectors found in Step 7
+- Use frameworks chosen in Step 4 or Step 6
+- Generate tests for identified interactions
 
-// Detect framework
-if (deps['react-native']) {
-  framework = 'React Native';
-  platform = 'mobile';
-} else if (deps.react) {
-  framework = 'React';
-  platform = 'web';
-} else if (deps.next) {
-  framework = 'Next.js';
-  platform = 'web';
-} else if (deps.vue) {
-  framework = 'Vue';
-  platform = 'web';
-}
+**If JIRA Ticket (e.g., "BDPI-1234"):**
+- Use ACs or X-Ray test cases
+- Use selectors found in Step 7
+- Use frameworks chosen in Step 4 or Step 6
+- Generate tests covering all acceptance criteria
 
-// Detect existing test setup
-if (deps.playwright) testFrameworks.push('Playwright');
-if (deps.cypress) testFrameworks.push('Cypress');
-if (deps.detox) testFrameworks.push('Detox');
-if (deps['@wdio/cli']) testFrameworks.push('Maestro');
-```
+**Generate test files:**
 
-Display findings:
-
-**For Web:**
-```
-📊 Repository Analysis
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Platform: 🌐 Web
-Frontend: Next.js 14 (React, TypeScript)
-Backend: Node.js/Express API
-
-Installed Test Frameworks:
-  ✅ Playwright (E2E)
-  ✅ Jest (Unit/Integration)
-
-Test Location: tests/
-Naming: *.spec.ts, *.test.ts
-Selectors: data-testid attributes (87% coverage)
-```
-
-**For Mobile React Native:**
-```
-📊 Repository Analysis
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Platform: 📱 Mobile (React Native)
-Version: React Native 0.73
-TypeScript: Yes
-
-Installed Test Frameworks:
-  ⚠️ No mobile E2E framework detected
-
-Test Location: __tests__/
-Naming: *.test.tsx
-Selectors: testID props (78% coverage)
-Platforms: iOS, Android
-```
-
-### Step 7: Choose Test Framework (Based on Platform)
-
-**Now show framework options based on the platform selected in Step 3:**
-
-Ask user: "Which test framework do you want to use?"
-
-**If user selected Web (Platform 1):**
-
+Display progress:
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🌐 Select Web Test Framework
+🧪 Generating Tests
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Detected in your project:
-  1. ✅ Playwright (installed)     - Recommended for E2E
-  2. ✅ Jest (installed)           - For unit tests
-  3. ✅ Supertest (installed)      - For API tests
+Component: BoxDiscountActiveRewardCard.tsx
+Frameworks: Jest + React Testing Library
 
-Not installed (available):
-  4. Cypress - Alternative E2E framework
-  5. Vitest - Modern unit testing
-  6. React Testing Library - Component tests
+Creating test file...
+  ✅ BoxDiscountActiveRewardCard.spec.tsx (222 lines)
 
-Choose one or more (comma separated): 
-Example: 1,2,3 for Playwright + Jest + Supertest
+Test scenarios:
+  ✓ Title renders with formatted fixed budget
+  ✓ Title renders with formatted percent budget
+  ✓ CTA shows "Applied"
+  ✓ Click handler is called
+  ✓ Expiration label renders
+  ✓ Props forwarded correctly
 ```
 
-**If user selected Mobile React Native (Platform 2):**
+Continue with test execution and verification...
 
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📱 Select Mobile Test Framework
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Recommended for React Native:
-  1. 🎯 Maestro (recommended)      - Simple YAML-based E2E tests
-  2. Detox                        - Built for React Native
-  3. Appium                       - Cross-platform standard
-  4. Jest                         - For unit tests
-  5. React Native Testing Library - Component tests
-
-Detected in your project:
-  ✅ Jest (installed)
-
-Choose one or more (comma separated):
-Example: 1,5 for Maestro + React Native Testing Library
-```
-
-**Smart defaults based on detection:**
-
-For Web:
-- If Playwright installed → Default to Playwright
-- If Cypress installed → Default to Cypress  
-- If neither → Recommend Playwright (offer to install)
-
-For Mobile React Native:
-- Always recommend Maestro first (simplest)
-- If Detox installed → Show as option
-- Suggest React Native Testing Library for component tests
-
-**For each framework choice, confirm:**
-
-**Web example:**
-```
-You selected: Playwright + Jest + Supertest
-
-Will generate:
-  ✅ E2E tests (Playwright) - tests/e2e/
-  ✅ Unit tests (Jest) - tests/unit/
-  ✅ API tests (Supertest) - tests/api/
-
-Continue? (Y/n)
-```
-
-**Mobile React Native example:**
-```
-You selected: Maestro + React Native Testing Library
-
-Will generate:
-  ✅ E2E tests (Maestro) - .maestro/
-  ✅ Component tests (React Native Testing Library) - __tests__/
-
-Installation needed:
-  - Maestro: curl -Ls "https://get.maestro.mobile.dev" | bash
-  - @testing-library/react-native: npm install -D @testing-library/react-native
-
-Continue? (Y/n)
-```
-
-### Step 8: Analyze Test Source & Suggest Test Types
-
-**Based on the test source selected in Step 3:**
-
-**If TEST_SOURCE = "ac" (Acceptance Criteria):**
-
-For each AC, analyze and recommend test types:
-
-```javascript
-function analyzeAC(ac) {
-  const testTypes = [];
-  
-  // E2E tests for user-facing behavior
-  if (ac.match(/user can|user sees|user receives/i)) {
-    testTypes.push('E2E');
-  }
-  
-  // API tests for backend behavior
-  if (ac.match(/api|endpoint|returns|sends/i)) {
-    testTypes.push('API');
-  }
-  
-  // Unit tests for logic/calculations
-  if (ac.match(/calculates|validates|expires|expires after/i)) {
-    testTypes.push('Unit');
-  }
-  
-  // Component tests for UI components
-  if (ac.match(/button|form|modal|dropdown|shows|displays/i)) {
-    testTypes.push('Component');
-  }
-  
-  // Visual tests for appearance
-  if (ac.match(/color|size|layout|design|style/i)) {
-    testTypes.push('Visual');
-  }
-  
-  // Accessibility tests
-  if (ac.match(/accessible|screen reader|keyboard|aria/i)) {
-    testTypes.push('Accessibility');
-  }
-  
-  // Performance tests
-  if (ac.match(/load time|performance|fast|seconds/i)) {
-    testTypes.push('Performance');
-  }
-  
-  return testTypes;
-}
-```
-
-**If TEST_SOURCE = "xray" (X-Ray Test Cases):**
-
-For each X-Ray test case, analyze based on format:
-
-- **If BDD/Gherkin format:**
-  - Parse Given/When/Then steps
-  - Map to test scenarios
-  - Generate E2E tests for user flows
-  - Generate unit tests for business logic
-
-- **If Manual Test Steps format:**
-  - Parse test steps and expected results
-  - Convert manual steps to automated test actions
-  - Generate E2E tests for step-by-step flows
-  - Generate assertions for expected results
-
-```javascript
-function analyzeXRayTest(testCase) {
-  const testTypes = [];
-  
-  if (testCase.format === 'bdd') {
-    // Parse Gherkin scenarios
-    testTypes.push('E2E'); // Given/When/Then flows
-    if (hasBusinessLogic(testCase)) {
-      testTypes.push('Unit'); // Logic validation
-    }
-  } else if (testCase.format === 'manual') {
-    // Parse manual test steps
-    testTypes.push('E2E'); // Step-by-step automation
-    if (hasAPISteps(testCase)) {
-      testTypes.push('API'); // API validation
-    }
-  }
-  
-  return testTypes;
-}
-```
-
-Display:
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 Analyzing X-Ray Test Cases
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Test: EPS-5678 - Verify email verification code request
-Format: Manual Test Steps
-Recommended: E2E, Component
-
-Test: EPS-5679 - Verify verification email delivery time
-Format: Manual Test Steps
-Recommended: E2E, API, Performance
-
-Test: EPS-5680 - Verify code expiration after 15 minutes
-Format: BDD (Gherkin)
-Recommended: E2E, Unit
-
-...
-```
-
-**If TEST_SOURCE = "component" (Specific Component):**
-
-Analyze component and generate tests for:
-
-```javascript
-function analyzeComponent(component) {
-  const testTypes = [];
-  
-  // Always include component tests
-  testTypes.push('Component');
-  
-  // Check for user interactions → E2E
-  if (hasUserInteractions(component)) {
-    testTypes.push('E2E');
-  }
-  
-  // Check for business logic → Unit
-  if (hasBusinessLogic(component)) {
-    testTypes.push('Unit');
-  }
-  
-  // Check for API calls → Integration
-  if (hasAPIcalls(component)) {
-    testTypes.push('Integration');
-  }
-  
-  // Check for accessibility attributes → A11y
-  if (hasA11yAttributes(component)) {
-    testTypes.push('Accessibility');
-  }
-  
-  return testTypes;
-}
-```
-
-Display:
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🧩 Analyzing Component: EmailVerification.tsx
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Component Type: Form with validation
-User Interactions: Input, Submit, Resend
-API Calls: POST /api/verify-email
-Business Logic: Code validation, Timer countdown
-
-Recommended Test Types:
-  ✓ Component tests - Props, rendering, events
-  ✓ E2E tests - User flows
-  ✓ Integration tests - API integration
-  ✓ Unit tests - Validation logic, timer
-```
-```
-
-Display analysis:
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 AC Analysis & Test Recommendations
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-AC #1: User receives verification email
-  Recommended: E2E, API
-  Frameworks: Playwright, Supertest
-
-AC #2: Code expires after 15 minutes
-  Recommended: Unit, E2E
-  Frameworks: Jest, Playwright
-
-AC #3: Success notification shown
-  Recommended: Component, E2E
-  Frameworks: React Testing Library, Playwright
-
-AC #4: Page loads in under 2 seconds
-  Recommended: Performance, E2E
-  Frameworks: Lighthouse, Playwright
-```
-
-### Step 9: Generate Tests Using Selector Map
+### Step 9: Display Summary and Next Steps
 
 **Use the selector map from Step 2:**
 
