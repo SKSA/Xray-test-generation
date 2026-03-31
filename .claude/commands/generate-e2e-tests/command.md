@@ -188,7 +188,11 @@ Recommended for this component:
   (Matches existing test patterns in this feature)
 ```
 
-### Step 4: Ask User - Auto or Manual?
+### Step 4: Ask User - Auto or Manual? (MANDATORY)
+
+**⚠️ CRITICAL: You MUST ask the user this question. Do NOT skip this step.**
+
+**DO NOT auto-generate without asking the user first.**
 
 **Ask user if they want to use auto-detected settings or choose manually:**
 
@@ -196,6 +200,8 @@ Recommended for this component:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚙️ Test Configuration
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  STOP - User choice required
 
 Do you want to use auto-detected settings or choose manually?
 
@@ -207,6 +213,8 @@ Do you want to use auto-detected settings or choose manually?
 
 Choose option (1 or 2):
 ```
+
+**WAIT for user response. DO NOT proceed until user answers.**
 
 **If user selects "1. Auto (Recommended)":**
 - Use auto-detected platform
