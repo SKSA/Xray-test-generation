@@ -59,6 +59,7 @@ That's it! 🎉
 | `/collect-ac` | Collect acceptance criteria from JIRA, Confluence, and Figma |
 | `/create-xray-tests` | Generate test cases in X-Ray from ACs (BDD or Manual format) |
 | `/generate-e2e-tests` | Generate automated tests (Web: Playwright/Cypress, Mobile: Maestro/Detox) |
+| `/start-qa-verification` | **[NEW]** Complete PR verification: Extract ACs, generate Cypress tests, run and report results |
 | `/verify-ac` | Interactively verify each acceptance criterion |
 | `/post-to-jira` | Post verification results to JIRA ticket (auto-prompted after verify) |
 | `/figma-ac-extractor` | Extract user flow ACs from Figma designs |
@@ -152,6 +153,45 @@ maestro test .maestro/EPS-1234.yaml     # React Native
 
 ---
 
+## 🚀 Alternative: Automated PR Verification
+
+**For a fully automated experience**, use `/start-qa-verification` after your PR is created:
+
+```bash
+# Complete automated PR verification workflow
+/start-qa-verification 123
+
+→ Auto-fetches PR #123
+→ Checks out PR branch automatically
+→ Extracts ACs from PR, JIRA ticket, Story, and Epic
+→ Scans PR for test selectors
+→ Generates Cypress tests automatically
+→ Runs tests in headful mode
+→ Displays results in table format
+→ Keeps test files for future use
+
+# Result:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 QA Verification Results
+
+  ✅ 4/5 ACs passed (80%)
+  ❌ 1/5 ACs failed
+  
+  Test file: cypress/e2e/pr-123-verification.cy.ts
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Optional: Post results to PR
+→ Comment with test results added to PR #123
+```
+
+**When to use `/start-qa-verification`:**
+- ✅ PR is ready for QA
+- ✅ Want complete automation (no manual steps)
+- ✅ Need quick verification before review
+- ✅ Want test files generated and saved
+
+---
+
 ## 🎯 Key Features
 
 ### **Multi-Source AC Detection**
@@ -218,9 +258,10 @@ Tracks across sprints:
 - `collect-ac/` - Multi-source AC fetching
 - `verify-ac/` - Interactive verification
 - `generate-e2e-tests/` - Test generation
+- `start-qa-verification/` - **[NEW]** Automated PR verification
 - `post-to-jira/` - JIRA integration
 - `figma-ac-extractor/` - Figma integration
-- `smart-selector-scan/` - Selector mapping
+- `create-xray-tests/` - X-Ray test case generation
 - `ac-quality-trends/` - Quality metrics
 
 ### Documentation
