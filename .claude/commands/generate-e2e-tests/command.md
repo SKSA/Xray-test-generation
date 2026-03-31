@@ -1,14 +1,14 @@
 ---
 name: /generate-e2e-tests
-argument-hint: '[JIRA-TICKET] [--framework=playwright|cypress|jest|rtl|vitest]'
-description: Generate tests from ACs with multi-framework support
+argument-hint: '[JIRA-TICKET (optional)] [--framework=playwright|cypress|jest|rtl|vitest]'
+description: Generate tests from JIRA ticket or component with multi-framework support
 mode: single-agent
 ---
 
-# Generate Tests from Acceptance Criteria (Multi-Framework)
+# Generate Tests (Multi-Framework)
 
 ## Purpose
-Generate automated tests from acceptance criteria based on your code implementation. This command scans your implemented code for selectors, components, and structure, then generates tests that match your actual implementation.
+Generate automated tests from JIRA tickets (ACs, X-Ray test cases) OR directly from components. Works without JIRA if you just want to test a specific component or feature.
 
 **⚠️ Important:** Run this AFTER implementing your feature, not before. The command scans your code to generate accurate tests.
 
@@ -55,19 +55,166 @@ If yes:
   npx playwright install
 ```
 
-### Step 2: Load Acceptance Criteria
+### Step 2: Choose Starting Point
+
+Ask user if they have a JIRA ticket or want to test a component directly:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 Test Generation Starting Point
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+How would you like to start?
+
+1. 🎫 JIRA Ticket
+   Generate tests from JIRA ticket (ACs, X-Ray test cases)
+   
+2. 🧩 Component/Feature
+   Generate tests for a specific component or feature
+   (No JIRA ticket needed)
+
+Choose option (1 or 2):
+```
+
+**Store choice:** `STARTING_POINT = "jira" | "component"`
+
+---
+
+**If user selects "1. JIRA Ticket":**
 
 Ask user: "What's your JIRA ticket number? (e.g., EPS-1234)"
 
+Store as `$TICKET`
+
 Read AC from: `.ac-verification/$TICKET/ac-checklist.md`
 
-### Step 3: Choose Test Source
+**Then proceed to Step 3 (Choose Test Source)** with JIRA-based options.
+
+---
+
+**If user selects "2. Component/Feature":**
+
+Skip JIRA ticket loading and ask for component details:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧩 Component/Feature Details
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Enter component name or path:
+Examples:
+  - EmailVerification
+  - src/components/EmailVerification.tsx
+  - Login form
+  - User profile page
+
+Component:
+```
+
+Store as `$COMPONENT`
+
+**Then ask for test description (free text):**
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 What Should Be Tested?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Describe what you want to test (free text):
+
+Examples:
+  - "Test user can enter email and click send verification code"
+  - "Test form validation, submission, and error handling"
+  - "Test navigation between login and signup"
+  - "Test all user interactions and state changes"
+
+What to test:
+```
+
+Store as `$TEST_DESCRIPTION`
+
+**Then search for component in codebase:**
+
+```bash
+# Search for component
+find src -name "*$COMPONENT*" -type f 2>/dev/null | grep -E '\.(tsx?|jsx?|vue|svelte)$'
+```
+
+If multiple matches found:
+```
+Found multiple matches:
+  1. src/components/EmailVerification/EmailVerification.tsx
+  2. src/components/EmailVerification/index.tsx
+  3. src/pages/Profile/EmailVerification.tsx
+
+Choose component (1-3):
+```
+
+If no matches found:
+```
+⚠️ Component not found in codebase
+
+Options:
+  1. Enter a different component name/path
+  2. Continue anyway (will generate generic tests)
+
+Choose option (1 or 2):
+```
+
+**Read and analyze component:**
+- Extract props, functions, state
+- Identify user interactions
+- Find test IDs/selectors
+- Understand component behavior
+
+Display analysis:
+```
+✅ Component Analysis Complete
+
+Component: EmailVerification.tsx
+Location: src/components/EmailVerification/
+
+Props:
+  • email: string
+  • onVerify: (code: string) => void
+  • isLoading: boolean
+
+User Interactions:
+  • Input field for verification code
+  • Submit button
+  • Resend code button
+
+Test IDs Found:
+  • verification-code-input
+  • submit-verification-button
+  • resend-code-button
+
+Test Description:
+  "Test user can enter email and click send verification code"
+
+Will generate tests for:
+  ✓ Entering verification code (from test description)
+  ✓ Clicking submit button (from test description)
+  ✓ Resending code (from component analysis)
+  ✓ Form validation (from component analysis)
+  ✓ Loading states (from component analysis)
+```
+
+**Skip to Step 4 (Choose Platform)** - No need for "Choose Test Source" step.
+
+---
+
+### Step 3: Choose Test Source (Only for JIRA Ticket flow)
+
+**This step is SKIPPED if user selected "Component/Feature" in Step 2.**
+
+**Only runs if STARTING_POINT = "jira":**
 
 Ask user what to base the tests on:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📝 Select Test Source
+📝 Select Test Source (JIRA Ticket: $TICKET)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 What should the tests be based on?
@@ -78,8 +225,8 @@ What should the tests be based on?
 2. 🧪 X-Ray Test Cases
    Generate tests from X-Ray test cases created earlier
    
-3. 🧩 Specific Component
-   Generate tests for a specific component/file in the repo
+3. 🧩 Specific Component (within this ticket)
+   Generate tests for a specific component/file
 
 Choose source (1, 2, or 3):
 ```
