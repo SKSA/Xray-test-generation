@@ -190,33 +190,35 @@ Recommended for this component:
 
 ### Step 4: Ask User - Auto or Manual? (MANDATORY)
 
-**⚠️ CRITICAL: You MUST ask the user this question. Do NOT skip this step.**
+**⚠️ CRITICAL: You MUST ask the user this question using the AskQuestion tool. Do NOT skip this step.**
 
 **DO NOT auto-generate without asking the user first.**
 
-**Ask user if they want to use auto-detected settings or choose manually:**
+**Use the AskQuestion tool to ask user:**
 
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⚙️ Test Configuration
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```typescript
+AskQuestion({
+  title: "⚙️ Test Configuration",
+  questions: [{
+    id: "config_choice",
+    prompt: `Auto-detected settings:
+• Platform: Web (React/Next.js)
+• Frameworks: Jest + React Testing Library
+• Pattern: Matches existing tests
 
-⚠️  STOP - User choice required
-
-Do you want to use auto-detected settings or choose manually?
-
-1. 🤖 Auto (Recommended)
-   Use detected settings: Web + Jest + React Testing Library
-   
-2. ✋ Manual
-   Choose platform and frameworks yourself
-
-Choose option (1 or 2):
+Do you want to use auto-detected settings or choose manually?`,
+    options: [
+      { id: "auto", label: "🤖 Auto (Recommended) - Use detected settings" },
+      { id: "manual", label: "✋ Manual - Choose platform and frameworks yourself" }
+    ],
+    allow_multiple: false
+  }]
+})
 ```
 
 **WAIT for user response. DO NOT proceed until user answers.**
 
-**If user selects "1. Auto (Recommended)":**
+**If user selects "auto":**
 - Use auto-detected platform
 - Use auto-detected/recommended frameworks
 - Skip to Step 7 (Generate Tests)
@@ -229,7 +231,7 @@ Choose option (1 or 2):
   Generating tests...
   ```
 
-**If user selects "2. Manual":**
+**If user selects "manual":**
 - Proceed to Step 5 (Manual Platform Selection)
 - Then Step 6 (Manual Framework Selection)
 
