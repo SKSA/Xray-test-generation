@@ -279,6 +279,29 @@ Save to `.test-docs/data/all-teams.json`
 
 ### Step 5: Generate Interactive Multi-Team Dashboard
 
+**⚠️ IMPORTANT:** Check if dashboard already exists before generating.
+
+```bash
+DASHBOARD_FILE=".test-docs/index.html"
+
+if [ -f "$DASHBOARD_FILE" ]; then
+  echo "✅ Dashboard already exists at $DASHBOARD_FILE"
+  echo "   Skipping HTML generation (data will be updated)"
+  GENERATE_HTML=false
+else
+  echo "🎨 Generating dashboard for the first time..."
+  GENERATE_HTML=true
+fi
+```
+
+**If `GENERATE_HTML=false`:**
+- Skip Step 5 entirely (do not regenerate HTML)
+- Jump directly to Step 11 (Display Results)
+- Show message: "Dashboard updated with latest data"
+
+**If `GENERATE_HTML=true`:**
+- Proceed with HTML generation below
+
 Create `.test-docs/index.html` with:
 
 **Key Features:**
@@ -727,7 +750,11 @@ Create `.test-docs/index.html` with:
 
 ```bash
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "✅ Test Documentation Generated!"
+if [ "$GENERATE_HTML" = true ]; then
+  echo "✅ Test Documentation Generated!"
+else
+  echo "✅ Test Documentation Updated!"
+fi
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 echo "📊 Summary:"
@@ -736,15 +763,23 @@ echo "   Total Files:        ${total_files}"
 echo "   Overall Coverage:   ${overall_coverage}%"
 echo "   Critical Gaps:      ${critical_gaps}"
 echo ""
-echo "📂 Generated Files:"
-echo "   Dashboard:       .test-docs/index.html"
-echo "   Team Data:       .test-docs/data/all-teams.json"
-echo "   Ownership Map:   .test-docs/team-ownership.json"
+echo "📂 Files:"
+if [ "$GENERATE_HTML" = true ]; then
+  echo "   ✅ Created:  .test-docs/index.html (dashboard)"
+else
+  echo "   ♻️  Kept:    .test-docs/index.html (existing dashboard)"
+fi
+echo "   ✅ Updated:  .test-docs/data/all-teams.json"
+echo "   ✅ Updated:  .test-docs/team-ownership.json"
 echo ""
 echo "🌐 Open in browser:"
 echo "   open .test-docs/index.html"
 echo ""
-echo "🔄 To update: Run /document-tests again"
+if [ "$GENERATE_HTML" = true ]; then
+  echo "💡 Next run will update data only (HTML preserved)"
+else
+  echo "💡 Dashboard HTML preserved, data refreshed"
+fi
 echo ""
 
 # Open in browser
@@ -779,5 +814,8 @@ fi
 - **Feature-wise Coverage**: Shows coverage breakdown by feature/module
 - **Test Pyramid**: Visual breakdown per team (E2E/Integration/Unit)
 - **Leaderboard**: All teams ranked by coverage
-- **Auto-update**: Run command again to refresh data
+- **Smart Updates**: 
+  - First run: Generates HTML dashboard + data
+  - Subsequent runs: Only updates JSON data (preserves HTML)
+  - Dashboard automatically loads latest data on refresh
 - **Standalone**: No dependency on JIRA or other commands
