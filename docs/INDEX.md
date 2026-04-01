@@ -22,6 +22,31 @@
   - Basic workflow
   - Common issues
 
+### Technical Documentation
+- **[GENERATE-E2E-TESTS-ALIGNMENT.md](./GENERATE-E2E-TESTS-ALIGNMENT.md)** - spec-machine alignment analysis (12KB)
+  - How `/generate-e2e-tests` aligns with spec-machine patterns
+  - Testing conventions comparison
+  - Recommendations for correctness
+  - Project pattern detection
+
+### Feature Documentation
+- **[IMPROVEMENTS-V2.md](./IMPROVEMENTS-V2.md)** - Feature descriptions (17KB)
+  - Detailed feature descriptions
+  - Multi-source AC detection
+  - Smart selector scanning
+  - Quality tracking
+
+### Integration Guides
+- **[FIGMA-AC-FOCUS.md](./FIGMA-AC-FOCUS.md)** - Figma integration guide (5KB)
+  - How Figma extraction works
+  - User flow detection
+  - Visual AC capture
+
+- **[HOW-TO-SHARE.md](./HOW-TO-SHARE.md)** - Sharing guide (8KB)
+  - How to share with your team
+  - Installation instructions
+  - Repository setup
+
 ---
 
 ## ⚙️ Command Files

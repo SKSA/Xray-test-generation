@@ -144,6 +144,97 @@ Store as `$TEST_DESCRIPTION`
 
 If blank, will auto-analyze component for test scenarios.
 
+### Step 2.5: Scan Project Test Patterns (IMPORTANT)
+
+**Before generating tests, detect the project's existing test conventions to ensure generated tests match the codebase style.**
+
+```bash
+echo "🔍 Scanning project test patterns..."
+
+# 1. Detect Provider Patterns
+DETECTED_PROVIDERS=$(find src app -name "*.spec.tsx" -o -name "*.test.tsx" 2>/dev/null | head -5 | xargs grep -h "Provider" 2>/dev/null | grep -E "import.*Provider|<.*Provider" | sort -u)
+
+if [ -n "$DETECTED_PROVIDERS" ]; then
+  echo "✅ Detected Providers:"
+  echo "$DETECTED_PROVIDERS" | head -10
+fi
+
+# 2. Detect Test Location Pattern
+COLOCATED_TESTS=$(find src app -name "*.spec.tsx" -o -name "*.spec.ts" 2>/dev/null | wc -l | tr -d ' ')
+TESTS_DIR_TESTS=$(find tests __tests__ -name "*.spec.tsx" -o -name "*.test.tsx" 2>/dev/null | wc -l | tr -d ' ')
+
+if [ "$COLOCATED_TESTS" -gt "$TESTS_DIR_TESTS" ]; then
+  TEST_LOCATION="colocated"
+  echo "✅ Test location: Colocated with components"
+else
+  TEST_LOCATION="tests-dir"
+  echo "✅ Test location: tests/ directory"
+fi
+
+# 3. Detect Test File Extension
+SPEC_TSX_COUNT=$(find . -name "*.spec.tsx" 2>/dev/null | wc -l | tr -d ' ')
+TEST_TSX_COUNT=$(find . -name "*.test.tsx" 2>/dev/null | wc -l | tr -d ' ')
+
+if [ "$SPEC_TSX_COUNT" -gt "$TEST_TSX_COUNT" ]; then
+  TEST_FILE_EXT=".spec.tsx"
+  echo "✅ Test extension: .spec.tsx"
+else
+  TEST_FILE_EXT=".test.tsx"
+  echo "✅ Test extension: .test.tsx"
+fi
+
+# 4. Detect Path Aliases
+USE_PATH_ALIASES=false
+if [ -f "tsconfig.json" ]; then
+  if grep -q '"@/.*"' tsconfig.json 2>/dev/null; then
+    USE_PATH_ALIASES=true
+    echo "✅ Path aliases: Using @/* aliases"
+  else
+    echo "✅ Path aliases: Using relative imports"
+  fi
+fi
+
+# 5. Sample Existing Test for Provider Pattern
+SAMPLE_TEST=$(find src app -name "*.spec.tsx" -o -name "*.test.tsx" 2>/dev/null | head -1)
+if [ -n "$SAMPLE_TEST" ]; then
+  echo "✅ Sample test: $SAMPLE_TEST"
+  
+  # Extract provider wrapping pattern
+  PROVIDER_PATTERN=$(grep -A 20 "render(" "$SAMPLE_TEST" 2>/dev/null | grep -E "Provider|<[A-Z].*Provider")
+  
+  if [ -n "$PROVIDER_PATTERN" ]; then
+    echo "✅ Provider pattern detected in existing tests"
+  fi
+fi
+
+# 6. Detect Mock Location
+MOCK_LOCATIONS=$(find . -type d \( -name "__mocks__" -o -name "test-utils" -o -name "mocks" \) 2>/dev/null | head -3)
+if [ -n "$MOCK_LOCATIONS" ]; then
+  echo "✅ Mock locations:"
+  echo "$MOCK_LOCATIONS"
+fi
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "📋 Project Test Conventions Detected"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "Test Location:   $TEST_LOCATION"
+echo "File Extension:  $TEST_FILE_EXT"
+echo "Path Aliases:    $USE_PATH_ALIASES"
+echo "Providers Found: $(echo "$DETECTED_PROVIDERS" | wc -l | tr -d ' ') patterns"
+echo ""
+echo "ℹ️  Generated tests will match these conventions"
+echo ""
+```
+
+**Store these detected patterns for use in test generation:**
+- `$TEST_LOCATION` - Where to place test files
+- `$TEST_FILE_EXT` - What extension to use
+- `$USE_PATH_ALIASES` - Whether to use `@/*` or relative imports
+- `$DETECTED_PROVIDERS` - Provider components found in existing tests
+- `$MOCK_LOCATIONS` - Where mock files should be placed
+
 ### Step 3: Auto-Detect Platform and Frameworks
 
 **Automatically detect platform and available frameworks:**
@@ -728,6 +819,51 @@ describe('EPS-1234: Email Verification API', () => {
 
 #### C. Jest + React Testing Library (Component Tests)
 
+**⚠️ IMPORTANT: Use Detected Project Patterns from Step 2.5**
+
+When generating component tests, apply the detected conventions:
+
+```typescript
+// 1. FILE LOCATION - Use $TEST_LOCATION from Step 2.5
+if ($TEST_LOCATION === "colocated") {
+  // Generate alongside component:
+  // src/components/VerificationForm/VerificationForm.spec.tsx
+  filePath = `${componentDir}/${componentName}${TEST_FILE_EXT}`;
+} else {
+  // Generate in tests/ directory:
+  // tests/components/VerificationForm.test.tsx
+  filePath = `tests/components/${componentName}${TEST_FILE_EXT}`;
+}
+
+// 2. IMPORTS - Use $USE_PATH_ALIASES from Step 2.5
+if ($USE_PATH_ALIASES) {
+  // Use path aliases:
+  import { VerificationForm } from '@/components/VerificationForm';
+  import { mockEmailService } from '@/__mocks__/emailService';
+} else {
+  // Use relative imports:
+  import { VerificationForm } from './VerificationForm';
+  import { mockEmailService } from '../mocks/emailService';
+}
+
+// 3. PROVIDERS - Use $DETECTED_PROVIDERS from Step 2.5
+// Extract provider names from detected patterns and generate helper:
+const renderWithProviders = (component: React.ReactElement) => {
+  return render(
+    // Wrap with detected providers in order found:
+    <QueryClientProvider client={new QueryClient()}>
+      <SystemCountryProvider systemCountry={SystemCountry.US}>
+        <LocalStorageProvider>
+          {component}
+        </LocalStorageProvider>
+      </SystemCountryProvider>
+    </QueryClientProvider>
+  );
+};
+```
+
+**Generated Component Test Example:**
+
 ```typescript
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -1158,6 +1294,12 @@ npm run test:a11y
 🎭 Tests Generated for EPS-1234 (Web)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+✅ Project Patterns Detected:
+- Test location: Colocated with components
+- File extension: .spec.tsx
+- Path aliases: Using @/* imports
+- Providers: 5 providers detected and applied
+
 ✅ Selector Scan:
 - Scanned: 156 files
 - Found: 342 selectors
@@ -1166,8 +1308,8 @@ npm run test:a11y
 
 ✅ Test Files Created:
 - tests/e2e/EPS-1234.spec.ts (5 tests) - Playwright
+- src/components/VerificationForm/VerificationForm.spec.tsx (3 tests) - Jest + RTL
 - tests/api/EPS-1234.test.ts (3 tests) - Supertest
-- tests/unit/expiration.test.ts (1 test) - Jest
 
 ✅ Configuration:
 - playwright.config.ts
@@ -1177,13 +1319,14 @@ npm run test:a11y
 - tests/e2e/EPS-1234-README.md
 
 📊 Test Summary:
-Total: 9 tests across 3 frameworks
+Total: 11 tests across 3 frameworks
 - E2E: 5 tests (Playwright) - Using real selectors ✅
+- Component: 3 tests (Jest + RTL) - Using project providers ✅
 - API: 3 tests (Supertest)
-- Unit: 1 test (Jest)
 
 🎯 AC Coverage: 100% (5/5 ACs covered)
 🎯 Selector Quality: 87% (uses real selectors, not generic)
+🎯 Project Alignment: 100% (matches existing test conventions)
 
 🚀 Next Steps:
 1. Review generated tests (check selector accuracy)
