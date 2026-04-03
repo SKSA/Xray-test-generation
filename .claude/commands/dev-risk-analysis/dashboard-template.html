@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Developer Risk Analysis — REW Squad</title>
+  <style>
+    :root {
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #141414;
+      --bg-tertiary: #1a1a1a;
+      --bg-card: #111111;
+      --border-primary: #2a2a2a;
+      --text-primary: #e0e0e0;
+      --text-secondary: #9a9a9a;
+      --text-muted: #555555;
+      --accent-orange: #F99D33;
+      --accent-blue: #3b82f6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --low-risk: #10b981;
+      --medium-risk: #f59e0b;
+      --high-risk: #ef4444;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-primary);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header-left h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .header-left .subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .header-badge {
+      background: rgba(249, 157, 51, 0.12);
+      border: 1px solid rgba(249, 157, 51, 0.3);
+      color: var(--accent-orange);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 28px 32px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: 10px;
+      padding: 18px 20px;
+    }
+
+    .stat-card .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .stat-card .value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -1px;
+    }
+
+    .stat-card .value.accent { color: var(--accent-orange); }
+    .stat-card .value.success { color: var(--success); }
+    .stat-card .value.warning { color: var(--warning); }
+    .stat-card .value.error { color: var(--error); }
+
+    .stat-card .meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+    }
+
+    .table-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      background: var(--bg-tertiary);
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: var(--text-muted);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border-primary);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    thead th:hover { color: var(--text-secondary); }
+    thead th.sort-asc::after { content: ' \2191'; color: var(--accent-orange); }
+    thead th.sort-desc::after { content: ' \2193'; color: var(--accent-orange); }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border-primary);
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+    tbody td {
+      padding: 14px 16px;
+      vertical-align: middle;
+    }
+
+    .dev-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .expand-icon {
+      color: var(--text-muted);
+      font-size: 10px;
+      transition: transform 0.2s;
+      display: inline-block;
+    }
+
+    .risk-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .risk-badge.low {
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--low-risk);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .risk-badge.medium {
+      background: rgba(245, 158, 11, 0.12);
+      color: var(--medium-risk);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+
+    .risk-badge.high {
+      background: rgba(239, 68, 68, 0.12);
+      color: var(--high-risk);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+
+    .score-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .score-num {
+      font-size: 15px;
+      font-weight: 700;
+      min-width: 32px;
+    }
+
+    .score-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+      overflow: hidden;
+      min-width: 80px;
+    }
+
+    .score-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    .num-cell { font-size: 15px; font-weight: 600; }
+    .num-cell.dim { color: var(--text-secondary); }
+
+    .bug-rate-cell { font-weight: 600; }
+    .bug-rate-cell.low { color: var(--success); }
+    .bug-rate-cell.medium { color: var(--warning); }
+    .bug-rate-cell.high { color: var(--error); }
+
+    .detail-row { display: none; }
+    .detail-row.show { display: table-row; }
+
+    .detail-content {
+      padding: 16px 20px 20px 40px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-primary);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+    }
+
+    .detail-section h4 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+
+    .pr-list { list-style: none; }
+
+    .pr-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    .pr-item:last-child { border-bottom: none; }
+
+    .pr-number {
+      font-size: 11px;
+      color: var(--accent-orange);
+      font-weight: 600;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .pr-number:hover { text-decoration: underline; }
+
+    .pr-title {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .pr-type-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+
+    .dot-feature { background: var(--accent-blue); }
+    .dot-bug { background: var(--error); }
+    .dot-revert { background: var(--warning); }
+    .dot-patch { background: var(--text-muted); }
+
+    .empty-list { color: var(--text-muted); font-size: 12px; font-style: italic; }
+
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .chart-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-primary);
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .chart-card h3 {
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 18px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+
+    .hbar-chart { display: flex; flex-direction: column; gap: 12px; }
+
+    .hbar-row { display: flex; align-items: center; gap: 12px; }
+
+    .hbar-label {
+      width: 150px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-align: right;
+      flex-shrink: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .hbar-track {
+      flex: 1;
+      height: 26px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .hbar-fill {
+      height: 100%;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      min-width: 36px;
+    }
+
+    .hbar-fill-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .dot-chart { display: flex; flex-direction: column; gap: 16px; }
+
+    .dot-row { display: flex; align-items: center; gap: 10px; }
+
+    .dot-dev { width: 150px; font-size: 12px; color: var(--text-secondary); text-align: right; flex-shrink: 0; }
+
+    .dot-track {
+      flex: 1;
+      height: 4px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      position: relative;
+    }
+
+    .dot-marker {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      border: 2px solid var(--bg-card);
+    }
+
+    .dot-rate-label {
+      width: 36px;
+      font-size: 11px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 24px;
+      color: var(--text-muted);
+      font-size: 11px;
+      border-top: 1px solid var(--border-primary);
+      margin-top: 8px;
+    }
+
+    /* Tooltips */
+    .tooltip-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--bg-tertiary);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: help;
+      margin-left: 6px;
+      border: 1px solid var(--border-primary);
+      transition: all 0.2s;
+    }
+
+    .tooltip-icon:hover {
+      background: var(--bg-secondary);
+      border-color: var(--accent-orange);
+      color: var(--accent-orange);
+    }
+
+    .tooltip-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .tooltip-content {
+      visibility: hidden;
+      opacity: 0;
+      position: absolute;
+      z-index: 1000;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      padding: 12px 14px;
+      border-radius: 6px;
+      border: 1px solid var(--border-primary);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      font-size: 12px;
+      line-height: 1.5;
+      white-space: normal;
+      width: 280px;
+      text-align: left;
+      transition: opacity 0.2s, visibility 0.2s;
+      pointer-events: none;
+    }
+
+    .tooltip-content::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--bg-card);
+    }
+
+    .tooltip-wrapper:hover .tooltip-content {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .tooltip-content strong {
+      color: var(--accent-orange);
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+
+    .tooltip-formula {
+      background: var(--bg-secondary);
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+      margin: 6px 0;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>Developer Risk Analysis</h1>
+    <div class="subtitle" id="headerSubtitle">Select a squad/project to view analysis</div>
+  </div>
+  <div class="header-badge" id="headerBadge">Developer Quality Metrics</div>
+</div>
+
+<div class="container">
+
+  <div class="section" style="background: var(--bg-card); padding: 20px; border-radius: 8px; margin-bottom: 24px; border: 1px solid var(--border-primary);">
+    <label for="squadSelector" style="display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500;">
+      SELECT SQUAD / PROJECT
+      <span class="tooltip-wrapper">
+        <span class="tooltip-icon">?</span>
+        <span class="tooltip-content">
+          <strong>Squad/Project Selector</strong>
+          Choose a squad or JIRA project to view developer risk metrics. Each analysis covers the last 6 months of activity.
+        </span>
+      </span>
+    </label>
+    <select id="squadSelector" style="width: 100%; padding: 12px 16px; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-primary); border-radius: 6px; font-size: 14px; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+      <option value="">Loading...</option>
+    </select>
+  </div>
+
+  <div id="dashboardContent" style="display: none;">
+
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <div class="section-title">
+    Risk Overview
+    <span class="tooltip-wrapper">
+      <span class="tooltip-icon">?</span>
+      <span class="tooltip-content">
+        <strong>Risk Overview</strong>
+        Visual analysis of developer risk scores and bug rates. Higher scores indicate better code quality and fewer bugs introduced.
+      </span>
+    </span>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>
+        Risk Score by Developer
+        <span class="tooltip-wrapper">
+          <span class="tooltip-icon">?</span>
+          <span class="tooltip-content">
+            <strong>Risk Score Calculation</strong>
+            Base score: 100<br>
+            - Bugs caused: -10 each<br>
+            - Reverts: -5 each<br>
+            - Bug rate penalty: -5 per 10%<br>
+            <div class="tooltip-formula">Score = 100 - (bugs × 10) - (reverts × 5) - (bug_rate × 50)</div>
+            Higher scores (80+) = Low risk, reliable code
+          </span>
+        </span>
+      </h3>
+      <div class="hbar-chart" id="scoreChart"></div>
+    </div>
+    <div class="chart-card">
+      <h3>
+        Bug Rate by Developer
+        <span class="tooltip-wrapper">
+          <span class="tooltip-icon">?</span>
+          <span class="tooltip-content">
+            <strong>Bug Rate Calculation</strong>
+            <div class="tooltip-formula">Bug Rate = Bugs Caused / Total Features</div>
+            Shows the percentage of features that later required bug fixes. Lower is better.
+            <br><br>
+            • 0-15%: Good (green)<br>
+            • 15-25%: Medium (yellow)<br>
+            • 25%+: High (red)
+          </span>
+        </span>
+      </h3>
+      <div class="dot-chart" id="bugRateChart"></div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    Developer Breakdown
+    <span class="tooltip-wrapper">
+      <span class="tooltip-icon">?</span>
+      <span class="tooltip-content">
+        <strong>Developer Breakdown Table</strong>
+        Click any row to expand and see all PRs (features, bugs, reverts, patches) for that developer. Click column headers to sort.
+      </span>
+    </span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-col="login">Developer</th>
+          <th data-col="risk_score">
+            Risk Score
+            <span class="tooltip-wrapper">
+              <span class="tooltip-icon">?</span>
+              <span class="tooltip-content">
+                <strong>Risk Score (0-100)</strong>
+                Composite quality metric:<br>
+                • 80-100: Low risk (green)<br>
+                • 60-79: Medium risk (yellow)<br>
+                • 0-59: High risk (red)<br>
+                <div class="tooltip-formula">100 - (bugs×10) - (reverts×5) - (bug_rate×50)</div>
+              </span>
+            </span>
+          </th>
+          <th data-col="features_count">
+            Features
+            <span class="tooltip-wrapper">
+              <span class="tooltip-icon">?</span>
+              <span class="tooltip-content">
+                <strong>Features Shipped</strong>
+                Total number of feature PRs merged by this developer in the analysis period. Detected via "type: feature" label.
+              </span>
+            </span>
+          </th>
+          <th data-col="bugs_caused">
+            Bugs Caused
+            <span class="tooltip-wrapper">
+              <span class="tooltip-icon">?</span>
+              <span class="tooltip-content">
+                <strong>Bugs Caused</strong>
+                Number of bug fix PRs linked to this developer's features (via same ticket, file overlap, or time proximity). Detected via "type: bugfix" label or "fix bug" in title.
+              </span>
+            </span>
+          </th>
+          <th data-col="reverts">
+            Reverts
+            <span class="tooltip-wrapper">
+              <span class="tooltip-icon">?</span>
+              <span class="tooltip-content">
+                <strong>Reverts</strong>
+                Number of PRs that were reverted. Indicates code that had to be rolled back due to issues.
+              </span>
+            </span>
+          </th>
+          <th data-col="bug_rate">
+            Bug Rate
+            <span class="tooltip-wrapper">
+              <span class="tooltip-icon">?</span>
+              <span class="tooltip-content">
+                <strong>Bug Rate (%)</strong>
+                Percentage of features that required bug fixes.
+                <div class="tooltip-formula">Bugs / Features × 100</div>
+                Lower is better. Ideal: 0-15%
+              </span>
+            </span>
+          </th>
+          <th data-col="risk_level">
+            Risk Level
+            <span class="tooltip-wrapper">
+              <span class="tooltip-icon">?</span>
+              <span class="tooltip-content">
+                <strong>Risk Level</strong>
+                Overall assessment based on risk score:<br>
+                • Low: 80-100 (reliable)<br>
+                • Medium: 60-79 (watch)<br>
+                • High: 0-59 (needs attention)
+              </span>
+            </span>
+          </th>
+        </tr>
+      </thead>
+      <tbody id="devTableBody"></tbody>
+    </table>
+  </div>
+
+  <div class="section-title">
+    All PRs in Period
+    <span class="tooltip-wrapper">
+      <span class="tooltip-icon">?</span>
+      <span class="tooltip-content">
+        <strong>All Pull Requests</strong>
+        Complete list of all PRs analyzed in this period, grouped by type (Features, Bug Fixes, Reverts, Patches). Click any PR number to view it on GitHub.
+      </span>
+    </span>
+  </div>
+  <div id="prDetails"></div>
+
+  </div><!-- end dashboardContent -->
+
+</div>
+
+<div class="footer">
+  Generated <span id="genDate"></span> &nbsp;&middot;&nbsp; hellofresh/web
+</div>
+
+<script>
+let allAnalysisData = {};
+let currentSquad = null;
+let scoresData = null;
+let prsData = null;
+let sortCol = 'risk_score';
+let sortDir = 'asc';
+const prMap = {};
+
+async function init() {
+  // Load all analysis data files
+  const dataDir = 'data/';
+  const files = await fetch(dataDir).then(r => r.text()).catch(() => '');
+  
+  // Try to discover all JSON files (fallback: just load current one)
+  try {
+    const fileList = await fetch('data/all-analyses.json').then(r => r.json()).catch(() => null);
+    
+    if (fileList && fileList.analyses) {
+      // Load all available analyses
+      for (const analysis of fileList.analyses) {
+        const key = analysis.key;
+        const [scores, prs] = await Promise.all([
+          fetch(`data/${key}-scores.json`).then(r => r.json()).catch(() => null),
+          fetch(`data/${key}-analyzed-prs.json`).then(r => r.json()).catch(() => null)
+        ]);
+        if (scores) {
+          allAnalysisData[key] = { scores, prs, label: analysis.label };
+        }
+      }
+    } else {
+      // Fallback: load single analysis (current approach)
+      const [scores, prs] = await Promise.all([
+        fetch('data/developer-scores.json').then(r => r.json()),
+        fetch('data/analyzed-prs.json').then(r => r.json())
+      ]);
+      const key = scores.analysis_key;
+      allAnalysisData[key] = { scores, prs, label: key };
+    }
+  } catch (e) {
+    console.error('Failed to load analysis data:', e);
+  }
+
+  // Populate dropdown
+  const selector = document.getElementById('squadSelector');
+  const keys = Object.keys(allAnalysisData).sort();
+  
+  if (keys.length === 0) {
+    selector.innerHTML = '<option value="">No data available</option>';
+    return;
+  }
+
+  selector.innerHTML = keys.map(key => {
+    const data = allAnalysisData[key];
+    const label = data.label || key;
+    const type = data.scores.input_type === 'jira' ? 'JIRA' : 'Squad';
+    return `<option value="${key}">${type}: ${label}</option>`;
+  }).join('');
+
+  // Select first by default
+  selector.value = keys[0];
+  loadSquadData(keys[0]);
+
+  // Add change listener
+  selector.addEventListener('change', (e) => {
+    loadSquadData(e.target.value);
+  });
+}
+
+function loadSquadData(key) {
+  if (!allAnalysisData[key]) return;
+  
+  currentSquad = key;
+  const data = allAnalysisData[key];
+  scoresData = data.scores;
+  prsData = data.prs;
+
+  // Build PR map
+  Object.keys(prMap).forEach(k => delete prMap[k]);
+  const allPRs = [...(prsData.features||[]), ...(prsData.bugs||[]), ...(prsData.reverts||[]), ...(prsData.patches||[])];
+  allPRs.forEach(pr => { prMap[pr.pr_number] = pr; });
+
+  // Update header
+  const type = scoresData.input_type === 'jira' ? 'JIRA Project' : 'Squad';
+  const label = data.label || key;
+  document.getElementById('headerSubtitle').innerHTML = `${type}: ${key} &nbsp;&middot;&nbsp; ${scoresData.period.start} to ${scoresData.period.end} &nbsp;&middot;&nbsp; Last 6 months`;
+  document.getElementById('headerBadge').textContent = `${label}`;
+
+  // Render all sections
+  renderStats();
+  renderScoreChart();
+  renderBugRateChart();
+  renderTable();
+  renderPRDetails();
+
+  document.getElementById('genDate').textContent = new Date(scoresData.generated_at).toLocaleDateString('en-US', {
+    year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  // Show dashboard
+  document.getElementById('dashboardContent').style.display = 'block';
+}
+
+function riskColor(score) {
+  if (score >= 80) return '#10b981';
+  if (score >= 60) return '#f59e0b';
+  return '#ef4444';
+}
+
+function renderStats() {
+  const s = scoresData;
+  const avgColor = s.squad_average >= 80 ? 'success' : s.squad_average >= 60 ? 'warning' : 'error';
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card">
+      <div class="label">
+        Project
+        <span class="tooltip-wrapper">
+          <span class="tooltip-icon">?</span>
+          <span class="tooltip-content">
+            <strong>Analysis Scope</strong>
+            ${s.input_type === 'jira' ? 'JIRA Project Key' : 'Squad Name'} used for this analysis and the time period covered.
+          </span>
+        </span>
+      </div>
+      <div class="value accent">${s.analysis_key}</div>
+      <div class="meta">${s.period.start} to ${s.period.end}</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">
+        Contributors
+        <span class="tooltip-wrapper">
+          <span class="tooltip-icon">?</span>
+          <span class="tooltip-content">
+            <strong>Active Developers</strong>
+            Number of developers who merged at least one PR in the analysis period for this ${s.input_type === 'jira' ? 'project' : 'squad'}.
+          </span>
+        </span>
+      </div>
+      <div class="value">${s.developers.length}</div>
+      <div class="meta">Active developers</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">
+        Squad Avg Score
+        <span class="tooltip-wrapper">
+          <span class="tooltip-icon">?</span>
+          <span class="tooltip-content">
+            <strong>Squad Average Risk Score</strong>
+            Average risk score across all developers in the ${s.input_type === 'jira' ? 'project' : 'squad'}. Indicates overall code quality health.
+            <br><br>
+            • 80-100: Excellent (low risk)<br>
+            • 60-79: Fair (medium risk)<br>
+            • 0-59: Poor (high risk)
+          </span>
+        </span>
+      </div>
+      <div class="value ${avgColor}">${s.squad_average}</div>
+      <div class="meta">out of 100</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">
+        Features Merged
+        <span class="tooltip-wrapper">
+          <span class="tooltip-icon">?</span>
+          <span class="tooltip-content">
+            <strong>Total Features</strong>
+            Total number of feature PRs merged in the analysis period. Only includes PRs with "type: feature" label.
+          </span>
+        </span>
+      </div>
+      <div class="value">${s.total_features}</div>
+      <div class="meta">In period</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">
+        Bugs / Reverts
+        <span class="tooltip-wrapper">
+          <span class="tooltip-icon">?</span>
+          <span class="tooltip-content">
+            <strong>Bugs and Reverts</strong>
+            Total bug fix PRs and reverted PRs in the period. Lower numbers indicate more stable code.
+          </span>
+        </span>
+      </div>
+      <div class="value ${s.total_bugs > 0 ? 'warning' : 'success'}">${s.total_bugs}</div>
+      <div class="meta">${s.total_reverts} revert(s)</div>
+    </div>
+  `;
+}
+
+function renderScoreChart() {
+  const devs = [...scoresData.developers].sort((a, b) => b.risk_score - a.risk_score);
+  document.getElementById('scoreChart').innerHTML = devs.map(d => `
+    <div class="hbar-row">
+      <div class="hbar-label">${d.display_name || d.login}</div>
+      <div class="hbar-track">
+        <div class="hbar-fill" style="width:${d.risk_score}%; background:${riskColor(d.risk_score)}">
+          <span class="hbar-fill-label">${d.risk_score}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderBugRateChart() {
+  const devs = [...scoresData.developers].sort((a, b) => b.bug_rate - a.bug_rate);
+  const maxRate = Math.max(...devs.map(d => d.bug_rate), 0.5);
+  document.getElementById('bugRateChart').innerHTML = devs.map(d => {
+    const pct = maxRate > 0 ? (d.bug_rate / maxRate) * 100 : 0;
+    const color = d.bug_rate === 0 ? '#10b981' : d.bug_rate < 0.2 ? '#f59e0b' : '#ef4444';
+    const label = d.bug_rate === 0 ? '0%' : Math.round(d.bug_rate * 100) + '%';
+    return `
+      <div class="dot-row">
+        <div class="dot-dev">${d.display_name || d.login}</div>
+        <div class="dot-track">
+          <div class="dot-marker" style="left:${Math.max(pct,2)}%; background:${color}"></div>
+        </div>
+        <div class="dot-rate-label" style="color:${color}">${label}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function getSortedDevs() {
+  return [...scoresData.developers].sort((a, b) => {
+    let av = a[sortCol], bv = b[sortCol];
+    if (typeof av === 'string') { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    if (av < bv) return sortDir === 'asc' ? -1 : 1;
+    if (av > bv) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+}
+
+function renderTable() {
+  const devs = getSortedDevs();
+  document.getElementById('devTableBody').innerHTML = devs.map(d => {
+    const brClass = d.bug_rate === 0 ? 'low' : d.bug_rate < 0.25 ? 'medium' : 'high';
+    const brLabel = d.bug_rate === 0 ? '0%' : Math.round(d.bug_rate * 100) + '%';
+    return `
+      <tr data-login="${d.login}" onclick="toggleDetail('${d.login}')">
+        <td><div class="dev-name"><span class="expand-icon" id="icon-${d.login}">&#9654;</span>${d.display_name || d.login}</div></td>
+        <td>
+          <div class="score-bar-wrap">
+            <span class="score-num" style="color:${riskColor(d.risk_score)}">${d.risk_score}</span>
+            <div class="score-bar">
+              <div class="score-bar-fill" style="width:${d.risk_score}%; background:${riskColor(d.risk_score)}"></div>
+            </div>
+          </div>
+        </td>
+        <td><span class="num-cell">${d.features_count}</span></td>
+        <td><span class="num-cell ${d.bugs_caused === 0 ? 'dim' : ''}">${d.bugs_caused}</span></td>
+        <td><span class="num-cell ${(d.reverts||0) === 0 ? 'dim' : ''}">${d.reverts || 0}</span></td>
+        <td><span class="bug-rate-cell ${brClass}">${brLabel}</span></td>
+        <td><span class="risk-badge ${d.risk_level}">${d.risk_level}</span></td>
+      </tr>
+      <tr class="detail-row" id="detail-${d.login}">
+        <td colspan="7">
+          <div class="detail-content" id="detail-content-${d.login}"></div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  document.querySelectorAll('thead th[data-col]').forEach(th => {
+    th.className = th.dataset.col === sortCol ? 'sort-' + sortDir : '';
+    th.onclick = () => {
+      if (sortCol === th.dataset.col) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortCol = th.dataset.col;
+        sortDir = sortDir;
+      }
+      renderTable();
+    };
+  });
+}
+
+function toggleDetail(login) {
+  const row = document.getElementById('detail-' + login);
+  const icon = document.getElementById('icon-' + login);
+  const isOpen = row.classList.contains('show');
+
+  document.querySelectorAll('.detail-row.show').forEach(r => r.classList.remove('show'));
+  document.querySelectorAll('.expand-icon').forEach(i => { i.style.transform = ''; });
+
+  if (!isOpen) {
+    row.classList.add('show');
+    icon.style.transform = 'rotate(90deg)';
+    renderDetailContent(login);
+  }
+}
+
+function renderDetailContent(login) {
+  const dev = scoresData.developers.find(d => d.login === login);
+  const el = document.getElementById('detail-content-' + login);
+
+  function prList(nums, type) {
+    if (!nums || nums.length === 0) return '<div class="empty-list">None</div>';
+    return '<ul class="pr-list">' + nums.map(num => {
+      const pr = prMap[num];
+      const rawTitle = pr ? pr.title : '#' + num;
+      const title = rawTitle.length > 65 ? rawTitle.substring(0, 63) + '...' : rawTitle;
+      return '<li class="pr-item">' +
+        '<div class="pr-type-dot dot-' + type + '"></div>' +
+        '<a class="pr-number" href="https://github.com/hellofresh/web/pull/' + num + '" target="_blank">#' + num + '</a>' +
+        '<span class="pr-title">' + title + '</span>' +
+        '</li>';
+    }).join('') + '</ul>';
+  }
+
+  const others = [...(dev.revert_prs || []), ...(dev.patch_prs || [])];
+  el.innerHTML = '<div class="detail-grid">' +
+    '<div class="detail-section"><h4>Features (' + dev.features_count + ')</h4>' + prList(dev.feature_prs, 'feature') + '</div>' +
+    '<div class="detail-section"><h4>Bugs Attributed (' + dev.bugs_caused + ')</h4>' + prList(dev.bug_prs, 'bug') + '</div>' +
+    '<div class="detail-section"><h4>Reverts / Patches</h4>' + (others.length > 0 ? prList(others, 'revert') : '<div class="empty-list">None</div>') + '</div>' +
+    '</div>';
+}
+
+function renderPRDetails() {
+  const all = [
+    ...(prsData.features||[]).map(p => ({...p, _type:'feature'})),
+    ...(prsData.bugs||[]).map(p => ({...p, _type:'bug'})),
+    ...(prsData.reverts||[]).map(p => ({...p, _type:'revert'})),
+    ...(prsData.patches||[]).map(p => ({...p, _type:'patch'}))
+  ].sort((a, b) => new Date(b.merged_at) - new Date(a.merged_at));
+
+  const typeColor = { feature: '#3b82f6', bug: '#ef4444', revert: '#f59e0b', patch: '#555555' };
+
+  document.getElementById('prDetails').innerHTML = '<div class="table-wrap"><table>' +
+    '<thead><tr><th>PR</th><th>Title</th><th>Author</th><th>Type</th><th>Merged</th><th>+/- Lines</th></tr></thead>' +
+    '<tbody>' + all.map(pr => {
+      const net = (pr.additions || 0) - (pr.deletions || 0);
+      const netStr = net >= 0 ? '+' + net : '' + net;
+      const netColor = net >= 0 ? '#10b981' : '#ef4444';
+      const date = new Date(pr.merged_at).toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+      const short = pr.title.length > 68 ? pr.title.substring(0, 66) + '...' : pr.title;
+      return '<tr>' +
+        '<td><a class="pr-number" href="https://github.com/hellofresh/web/pull/' + pr.pr_number + '" target="_blank">#' + pr.pr_number + '</a></td>' +
+        '<td style="color:var(--text-secondary);font-size:12px">' + short + '</td>' +
+        '<td style="color:var(--text-secondary);font-size:12px">' + pr.author + '</td>' +
+        '<td><span style="font-size:11px;font-weight:600;color:' + typeColor[pr._type] + ';text-transform:uppercase;letter-spacing:0.5px">' + pr._type + '</span></td>' +
+        '<td style="color:var(--text-muted);font-size:12px;white-space:nowrap">' + date + '</td>' +
+        '<td style="font-size:12px;font-weight:600;color:' + netColor + '">' + netStr + '</td>' +
+        '</tr>';
+    }).join('') + '</tbody></table></div>';
+}
+
+init();
+</script>
+</body>
+</html>
