@@ -247,7 +247,7 @@ for developer in developers:
 ```json
 {
   "input_type": "squad",
-  "analysis_key": "squad-rewards-web",
+  "analysis_key": "squad_rewards-web",
   "period": {
     "start": "2025-09-24",
     "end": "2026-03-24"
@@ -270,6 +270,8 @@ for developer in developers:
   "generated_at": "2026-03-24T10:30:00Z"
 }
 ```
+
+**CRITICAL**: The `analysis_key` field must use underscores to match the file naming convention (e.g., `squad_SSX`, `jira_REW`). The format is: `${INPUT_TYPE}_${SQUAD_NAME_OR_PROJECT}`.
 
 **Note on Display Names:**
 - Store both `login` (GitHub username) and `name` (real name)
