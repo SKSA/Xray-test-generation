@@ -11,52 +11,120 @@ dependencies:
 # Generate X-Ray Test Cases from Acceptance Criteria
 
 ## Purpose
-This command extracts acceptance criteria from a JIRA ticket and automatically generates test cases in X-Ray format. It supports both BDD (Gherkin) and Manual test case formats, and can create the test cases directly in X-Ray or output them for review.
+This command generates X-Ray test cases from existing acceptance criteria. It supports both BDD (Gherkin) and Manual test case formats, and can create the test cases directly in X-Ray or output them for review.
+
+**Prerequisites:** Acceptance criteria should already be extracted and available. Use `/collect-ac TICKET-123` first if you need to extract ACs from the JIRA ticket.
 
 ## Prerequisites Check
 
-### Phase 0: Environment Validation
-1. **Check JIRA CLI availability:**
-   ```bash
-   jira version
-   ```
-   If not available, install: `brew install ankitpokhrel/jira-cli/jira-cli`
+### Phase 0: Environment and Setup Validation
 
-2. **Verify JIRA authentication:**
-   ```bash
-   jira me
-   ```
+#### 1. JIRA CLI Setup
+```bash
+# Check if JIRA CLI is installed
+if ! command -v jira &> /dev/null; then
+    echo "❌ JIRA CLI not found. Install with:"
+    echo "   macOS: brew install ankitpokhrel/jira-cli/jira-cli"
+    echo "   Other: https://github.com/ankitpokhrel/jira-cli"
+    exit 1
+fi
 
-3. **Check X-Ray integration:**
-   - Verify X-Ray is enabled in the JIRA instance
-   - Check if user has X-Ray test creation permissions
+# Check JIRA CLI version
+jira version
+```
 
-4. **Validate ticket format:**
-   - Ensure ticket number follows PROJECT-### format
-   - Check if ticket exists and is accessible
+#### 2. JIRA Authentication
+```bash
+# Verify JIRA authentication
+jira me
+```
+**If authentication fails:**
+```bash
+# Configure JIRA CLI
+jira init
+# Follow prompts to set:
+# - JIRA URL (e.g., https://company.atlassian.net)
+# - Username/Email
+# - API Token (from https://id.atlassian.com/manage-profile/security/api-tokens)
+```
+
+#### 3. X-Ray Integration Check
+```bash
+# Test X-Ray API access
+curl -H "Authorization: Bearer $JIRA_API_TOKEN" \
+     "$JIRA_URL/rest/raven/1.0/api/settings"
+```
+**If X-Ray check fails:**
+- Verify X-Ray is installed in your JIRA instance
+- Check if you have "Create Test" permissions in X-Ray
+- Ensure API token has appropriate scopes
+
+#### 4. Required Environment Variables
+```bash
+# Check required environment variables
+if [[ -z "$JIRA_API_TOKEN" ]]; then
+    echo "❌ JIRA_API_TOKEN not set. Export your JIRA API token:"
+    echo "   export JIRA_API_TOKEN='your-api-token-here'"
+    exit 1
+fi
+
+if [[ -z "$JIRA_URL" ]]; then
+    echo "❌ JIRA_URL not set. Export your JIRA URL:"
+    echo "   export JIRA_URL='https://company.atlassian.net'"
+    exit 1
+fi
+```
+
+#### 5. Ticket and AC Validation
+```bash
+# Verify ticket exists and is accessible
+jira issue view TICKET-123 --plain
+
+# Check if ACs are already available
+if [[ -f ".ac-verification/TICKET-123/ac-checklist.md" ]]; then
+    echo "✅ Using existing ACs from /collect-ac command"
+    AC_SOURCE=".ac-verification/TICKET-123/ac-checklist.md"
+elif [[ -n "$(jira issue view TICKET-123 --plain | grep -i 'acceptance criteria')" ]]; then
+    echo "⚠️  ACs found in ticket but not extracted yet."
+    echo "   Recommend running: /collect-ac TICKET-123 first"
+    echo "   Continue anyway? (y/N)"
+else
+    echo "❌ No acceptance criteria found. Run /collect-ac TICKET-123 first"
+    exit 1
+fi
+```
 
 ## Workflow
 
-### Step 1: Extract Acceptance Criteria
-Use the existing AC collection logic from the `collect-ac` command:
+### Step 1: Load Acceptance Criteria
 
-1. **Fetch ticket details:**
-   ```bash
-   jira issue view TICKET-123 --plain
-   ```
+#### Option A: Use Existing AC Collection (Recommended)
+```bash
+# Check if ACs were already collected using /collect-ac
+if [[ -f ".ac-verification/$TICKET/ac-checklist.md" ]]; then
+    echo "✅ Loading ACs from previous /collect-ac run"
+    AC_FILE=".ac-verification/$TICKET/ac-checklist.md"
+    cp "$AC_FILE" ".xray-tests/$TICKET/acceptance-criteria.md"
+else
+    echo "❌ No pre-collected ACs found. Please run:"
+    echo "   /collect-ac $TICKET"
+    echo "   Then run this command again"
+    exit 1
+fi
+```
 
-2. **Smart AC Detection (in priority order):**
-   - JIRA Custom Field: "Acceptance Criteria" 
-   - JIRA Description with smart parsing
-   - Linked Confluence pages
-   - JIRA Sub-tasks as ACs
-   - JIRA Comments containing AC patterns
+#### Option B: Quick AC Extraction (Fallback)
+If `/collect-ac` wasn't run, perform basic extraction:
+```bash
+# Simple extraction from JIRA ticket
+jira issue view $TICKET --plain > ".xray-tests/$TICKET/ticket-details.txt"
 
-3. **Parse and structure ACs:**
-   - Extract each AC as a separate item
-   - Clean up formatting and remove noise
-   - Identify Given-When-Then patterns if present
-   - Number ACs for reference
+# Look for AC patterns in description
+grep -A 20 -i "acceptance criteria\|AC:" ".xray-tests/$TICKET/ticket-details.txt" > \
+     ".xray-tests/$TICKET/acceptance-criteria.md"
+```
+
+**Note:** For comprehensive AC extraction with multiple sources (Confluence, sub-tasks, etc.), use the dedicated `/collect-ac` command first.
 
 ### Step 2: Determine Test Case Format
 Based on user preference or AC content analysis:
@@ -117,7 +185,7 @@ Expected Results:
   2. [Expected result 2]
 ```
 
-### Step 4: Create Tests in X-Ray
+### Step 5: Create Tests in X-Ray
 
 1. **Generate X-Ray JSON payload:**
    For BDD tests:
@@ -193,24 +261,6 @@ Expected Results:
      -d '{"object": {"url": "$JIRA_URL/browse/TICKET-123", "title": "Tests Story"}}'
    ```
 
-### Step 5: Generate Test Plan (Optional)
-
-1. **Create X-Ray Test Plan:**
-   - Group all generated tests under a test plan
-   - Name: "Test Plan: [TICKET] - [Summary]"
-   - Include all generated test cases
-   - Set appropriate test environments
-
-2. **Test Plan JSON:**
-   ```json
-   {
-     "testType": "Test Plan",
-     "summary": "Test Plan: TICKET-123 - [Summary]",
-     "description": "Automated test plan from acceptance criteria",
-     "testCases": ["TC-001", "TC-002", "..."]
-   }
-   ```
-
 ### Step 7: Validate Created Tests
 
 1. **Verify X-Ray Test Content:**
@@ -270,12 +320,11 @@ Expected Results:
 
 ## Command Options
 
-- `--format=bdd|manual`: Force specific test case format
-- `--dry-run`: Generate test cases but don't create in X-Ray (output to files)
-- `--test-plan`: Create a test plan containing all generated tests
-- `--link-story`: Link generated tests back to the original story
-- `--environment=ENV`: Set target test environment
-- `--component=COMP`: Override component detection
+- `--format=bdd|manual`: Force specific test case format (default: auto-detect from AC content)
+- `--dry-run`: Generate test cases but don't create in X-Ray (output to files only)
+- `--link-story`: Link generated tests back to the original story (default: true)
+- `--environment=ENV`: Set target test environment in test metadata
+- `--component=COMP`: Override component detection from ticket
 
 ## Output Files
 
@@ -292,19 +341,20 @@ Expected Results:
 
 ## Integration Points
 
-1. **JIRA Integration:**
-   - Fetches ticket details via JIRA CLI
+1. **AC Collection Integration:**
+   - **Prerequisite**: Use `/collect-ac TICKET-123` first to extract and verify ACs
+   - Reads from `.ac-verification/$TICKET/ac-checklist.md` when available
+   - Falls back to basic JIRA description parsing if needed
+
+2. **JIRA Integration:**
+   - Fetches ticket metadata via JIRA CLI
    - Links tests back to original story
-   - Updates ticket with test case links
+   - Uses ticket components and fix versions
 
-2. **X-Ray Integration:**
+3. **X-Ray Integration:**
    - Creates tests via X-Ray REST API
-   - Supports both BDD and Manual test types
-   - Generates test plans and test sets
-
-3. **Confluence Integration (Optional):**
-   - Can extract ACs from linked Confluence pages
-   - Posts test documentation to Confluence if configured
+   - Supports both BDD (Cucumber) and Manual test types
+   - Proper Gherkin content upload to test steps
 
 ## Error Handling
 
@@ -336,7 +386,10 @@ Expected Results:
 ## Example Usage
 
 ```bash
-# Basic usage - auto-detect format
+# Prerequisites: Extract ACs first
+/collect-ac PROJ-123
+
+# Basic usage - auto-detect format from AC content
 /generate-xray-tests PROJ-123
 
 # Force BDD format
@@ -345,8 +398,8 @@ Expected Results:
 # Dry run to review before creation
 /generate-xray-tests PROJ-123 --dry-run
 
-# Create with test plan
-/generate-xray-tests PROJ-123 --test-plan --environment=staging
+# Create with specific environment
+/generate-xray-tests PROJ-123 --environment=staging
 ```
 
 ## Success Metrics
