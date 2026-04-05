@@ -97,19 +97,17 @@ fi
 1. **Fetch complete ticket details:**
    ```bash
    # Get ticket content including description, custom fields, and metadata
-   jira issue view $TICKET --plain > ".xray-tests/$TICKET/ticket-details.txt"
-   
-   # Extract ticket metadata
-   TICKET_SUMMARY=$(jira issue view $TICKET --plain | grep "SUMMARY" | cut -d: -f2-)
-   TICKET_DESCRIPTION=$(jira issue view $TICKET --plain | sed -n '/DESCRIPTION/,/ASSIGNEE/p')
+   TICKET_DATA=$(jira issue view $TICKET --plain)
+   TICKET_SUMMARY=$(echo "$TICKET_DATA" | grep "SUMMARY" | cut -d: -f2-)
+   TICKET_DESCRIPTION=$(echo "$TICKET_DATA" | sed -n '/DESCRIPTION/,/ASSIGNEE/p')
    ```
 
-2. **Extract Acceptance Criteria:**
+2. **Extract Acceptance Criteria in memory:**
    ```bash
    # Look for AC patterns in multiple locations:
    
    # 1. Custom field "Acceptance Criteria"
-   AC_CUSTOM_FIELD=$(jira issue view $TICKET --plain | grep -A 50 "Acceptance Criteria:")
+   AC_CUSTOM_FIELD=$(echo "$TICKET_DATA" | grep -A 50 "Acceptance Criteria:")
    
    # 2. AC section in description
    AC_IN_DESCRIPTION=$(echo "$TICKET_DESCRIPTION" | grep -A 20 -i "acceptance criteria\|^AC[0-9]\|^- AC")
@@ -117,28 +115,9 @@ fi
    # 3. Structured requirements in description
    REQUIREMENTS=$(echo "$TICKET_DESCRIPTION" | grep -A 20 -i "requirements\|user story\|as a.*i want")
    
-   # Combine and clean up
-   echo "# Acceptance Criteria for $TICKET" > ".xray-tests/$TICKET/acceptance-criteria.md"
-   echo "## Source: $TICKET_SUMMARY" >> ".xray-tests/$TICKET/acceptance-criteria.md"
-   echo "" >> ".xray-tests/$TICKET/acceptance-criteria.md"
-   
-   # Add extracted ACs
-   [[ -n "$AC_CUSTOM_FIELD" ]] && echo "$AC_CUSTOM_FIELD" >> ".xray-tests/$TICKET/acceptance-criteria.md"
-   [[ -n "$AC_IN_DESCRIPTION" ]] && echo "$AC_IN_DESCRIPTION" >> ".xray-tests/$TICKET/acceptance-criteria.md"
-   [[ -n "$REQUIREMENTS" ]] && echo "$REQUIREMENTS" >> ".xray-tests/$TICKET/acceptance-criteria.md"
-   ```
-
-3. **Parse and structure ACs:**
-   ```bash
-   # Parse individual ACs from the extracted content
-   # Look for patterns like:
-   # - AC1: ...
-   # - Given... When... Then...
-   # - As a user I want...
-   # - The system should...
-   
-   # Number each AC for reference
-   AC_COUNT=$(grep -c -E "^(AC[0-9]|Given|As a|The system)" ".xray-tests/$TICKET/acceptance-criteria.md")
+   # Combine extracted ACs into array
+   readarray -t ACS_ARRAY <<< "$(echo -e "$AC_CUSTOM_FIELD\n$AC_IN_DESCRIPTION\n$REQUIREMENTS" | grep -v '^$')"
+   AC_COUNT=${#ACS_ARRAY[@]}
    echo "Found $AC_COUNT acceptance criteria"
    ```
 
@@ -199,170 +178,140 @@ fi
    3. [Final validation]
    ```
 
-### Step 3: Generate Test Cases
+### Step 3: Generate and Create X-Ray Test Cases
 
-Generate individual test case files for each acceptance criteria:
+Generate and create test cases directly in X-Ray for each acceptance criteria:
 
 ```bash
-# For each identified AC, create a separate test case
-for i in $(seq 1 $AC_COUNT); do
-    AC_TEXT=$(sed -n "${i}p" ".xray-tests/$TICKET/parsed-acs.txt")
+CREATED_TESTS=()
+
+# For each identified AC, generate test case content and create in X-Ray
+for i in "${!ACS_ARRAY[@]}"; do
+    AC_TEXT="${ACS_ARRAY[$i]}"
+    AC_TITLE=$(echo "$AC_TEXT" | head -1 | sed 's/^AC[0-9]*[:.]\s*//')
+    TEST_TITLE="${TICKET}-TC-$(printf "%03d" $((i+1))) - ${AC_TITLE}"
     
     if [[ "$TEST_FORMAT" == "bdd" ]]; then
-        # Create BDD feature file for this AC
-        cat > ".xray-tests/$TICKET/tc-$(printf "%03d" $i)-${AC_TITLE}.feature" <<EOF
-Feature: $TICKET-TC-$(printf "%03d" $i) - $AC_TITLE
+        # Generate BDD content in memory
+        GHERKIN_CONTENT=$(cat <<EOF
+Feature: $TEST_TITLE
 
   Background:
     Given the system is in a valid state
     And the user has appropriate permissions
 
-  Scenario: $SCENARIO_NAME
-    Given $GIVEN_CONDITION
-    When $WHEN_ACTION
-    Then $THEN_RESULT
+  Scenario: $AC_TITLE
+    Given $(echo "$AC_TEXT" | grep -i 'given\|precondition' | head -1 | sed 's/.*given\|.*precondition//i' | xargs)
+    When $(echo "$AC_TEXT" | grep -i 'when\|user\|action' | head -1 | sed 's/.*when\|.*user\|.*action//i' | xargs)
+    Then $(echo "$AC_TEXT" | grep -i 'then\|should\|expected' | head -1 | sed 's/.*then\|.*should\|.*expected//i' | xargs)
 EOF
+)
+        
+        # Create BDD test case in X-Ray
+        JSON_PAYLOAD=$(jq -n \
+            --arg projectKey "${TICKET%%-*}" \
+            --arg summary "$TEST_TITLE" \
+            --arg description "Generated from JIRA ticket $TICKET acceptance criteria: $AC_TEXT" \
+            --arg cucumber "$GHERKIN_CONTENT" \
+            --arg ticket "$TICKET" \
+            '{
+                testType: "Cucumber",
+                projectKey: $projectKey,
+                summary: $summary,
+                description: $description,
+                steps: {cucumber: $cucumber},
+                labels: ["automated-generation", "ac-based", "bdd"],
+                issueLinks: [{type: "Test", inwardIssue: $ticket}]
+            }')
     else
-        # Create Manual test case
-        cat > ".xray-tests/$TICKET/tc-$(printf "%03d" $i)-${AC_TITLE}.md" <<EOF
-# Test Case: $TICKET-TC-$(printf "%03d" $i)
-
-## Summary
-$AC_TITLE
-
-## Objective  
-Verify $AC_OBJECTIVE
-
-## Preconditions
-- User has appropriate permissions
-- System is in valid state
-- $SPECIFIC_PRECONDITIONS
-
-## Test Steps
-1. $TEST_STEP_1
-2. $TEST_STEP_2
-3. $TEST_STEP_3
-
-## Expected Results
-1. $EXPECTED_RESULT_1
-2. $EXPECTED_RESULT_2
-3. $EXPECTED_RESULT_3
-EOF
+        # Generate Manual test case content in memory
+        TEST_STEPS='[
+            {"step": "Navigate to the feature area mentioned in AC", "result": "Feature area is accessible"},
+            {"step": "Execute the action described in: '"$AC_TEXT"'", "result": "Action completes successfully"},
+            {"step": "Verify the expected outcome from AC", "result": "Expected behavior is observed"}
+        ]'
+        
+        # Create Manual test case in X-Ray  
+        JSON_PAYLOAD=$(jq -n \
+            --arg projectKey "${TICKET%%-*}" \
+            --arg summary "$TEST_TITLE" \
+            --arg description "Generated from JIRA ticket $TICKET acceptance criteria: $AC_TEXT" \
+            --argjson steps "$TEST_STEPS" \
+            --arg ticket "$TICKET" \
+            '{
+                testType: "Manual",
+                projectKey: $projectKey,
+                summary: $summary,
+                description: $description,
+                steps: $steps,
+                labels: ["automated-generation", "ac-based", "manual"],
+                issueLinks: [{type: "Test", inwardIssue: $ticket}]
+            }')
+    fi
+    
+    # Create test case in X-Ray
+    echo "Creating test case: $TEST_TITLE..."
+    RESPONSE=$(curl -s -X POST \
+        -H "Authorization: Bearer $JIRA_API_TOKEN" \
+        -H "Content-Type: application/json" \
+        "$JIRA_URL/rest/raven/1.0/api/test" \
+        -d "$JSON_PAYLOAD")
+    
+    TEST_KEY=$(echo "$RESPONSE" | jq -r '.key // empty')
+    if [[ -n "$TEST_KEY" && "$TEST_KEY" != "null" ]]; then
+        echo "✅ Created X-Ray test: $TEST_KEY"
+        CREATED_TESTS+=("$TEST_KEY")
+        
+        # Link test to original JIRA ticket
+        curl -s -X POST \
+            -H "Authorization: Bearer $JIRA_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            "$JIRA_URL/rest/api/2/issueLink" \
+            -d "{
+                \"type\": {\"name\": \"Test\"},
+                \"inwardIssue\": {\"key\": \"$TICKET\"},
+                \"outwardIssue\": {\"key\": \"$TEST_KEY\"}
+            }" > /dev/null
+        echo "🔗 Linked $TEST_KEY to $TICKET"
+    else
+        echo "❌ Failed to create test case for AC $((i+1))"
+        echo "Response: $RESPONSE"
     fi
 done
 ```
 
-### Step 4: Create Test Cases in X-Ray
+### Step 4: Display Results
 
-1. **Generate X-Ray JSON payload for each test case:**
-   ```bash
-   for test_file in .xray-tests/$TICKET/tc-*.{feature,md}; do
-       TEST_TITLE=$(basename "$test_file" | sed 's/tc-[0-9]*-//' | sed 's/\.(feature|md)$//')
-       
-       if [[ "$test_file" == *.feature ]]; then
-           # BDD Test Case
-           GHERKIN_CONTENT=$(cat "$test_file")
-           JSON_PAYLOAD=$(cat <<EOF
-   {
-     "testType": "Cucumber",
-     "projectKey": "${TICKET%%-*}",
-     "summary": "$TEST_TITLE",
-     "description": "Generated from JIRA ticket $TICKET acceptance criteria",
-     "steps": {
-       "cucumber": "$GHERKIN_CONTENT"
-     },
-     "labels": ["automated-generation", "ac-based", "bdd"],
-     "issueLinks": [
-       {
-         "type": "Test",
-         "inwardIssue": "$TICKET"
-       }
-     ]
-   }
-   EOF
-   )
-       else
-           # Manual Test Case  
-           TEST_STEPS=$(grep -A 20 "## Test Steps" "$test_file" | tail -n +2)
-           JSON_PAYLOAD=$(cat <<EOF
-   {
-     "testType": "Manual", 
-     "projectKey": "${TICKET%%-*}",
-     "summary": "$TEST_TITLE",
-     "description": "Generated from JIRA ticket $TICKET acceptance criteria",
-     "steps": [
-       $(echo "$TEST_STEPS" | sed 's/^[0-9]*\. /{"step": "/' | sed 's/$/", "result": "Verify step completed successfully"},/')
-     ],
-     "labels": ["automated-generation", "ac-based", "manual"],
-     "issueLinks": [
-       {
-         "type": "Test", 
-         "inwardIssue": "$TICKET"
-       }
-     ]
-   }
-   EOF
-   )
-       fi
-       
-       echo "$JSON_PAYLOAD" > ".xray-tests/$TICKET/payload-$TEST_TITLE.json"
-   done
-   ```
-
-2. **Create tests via X-Ray REST API:**
-   ```bash
-   for payload_file in .xray-tests/$TICKET/payload-*.json; do
-       echo "Creating test case from $payload_file..."
-       
-       RESPONSE=$(curl -X POST \
-         -H "Authorization: Bearer $JIRA_API_TOKEN" \
-         -H "Content-Type: application/json" \
-         "$JIRA_URL/rest/raven/1.0/api/test" \
-         -d "@$payload_file")
-       
-       TEST_KEY=$(echo "$RESPONSE" | jq -r '.key')
-       echo "✅ Created X-Ray test: $TEST_KEY"
-       echo "$TEST_KEY" >> ".xray-tests/$TICKET/created-tests.txt"
-   done
-   ```
-
-3. **Link tests to original JIRA ticket:**
-   ```bash
-   while read TEST_KEY; do
-       curl -X POST \
-         -H "Authorization: Bearer $JIRA_API_TOKEN" \
-         -H "Content-Type: application/json" \
-         "$JIRA_URL/rest/api/2/issueLink" \
-         -d "{
-           \"type\": {\"name\": \"Test\"},
-           \"inwardIssue\": {\"key\": \"$TICKET\"},
-           \"outwardIssue\": {\"key\": \"$TEST_KEY\"}
-         }"
-       echo "🔗 Linked $TEST_KEY to $TICKET"
-   done < ".xray-tests/$TICKET/created-tests.txt"
-   ```
+```bash
+# Display completion summary
+echo ""
+echo "✅ Generated ${#CREATED_TESTS[@]} X-Ray test cases from $AC_COUNT acceptance criteria"
+echo "✅ All tests linked to $TICKET"  
+echo "✅ Test format: $TEST_FORMAT"
+echo ""
+echo "Created tests:"
+for test_key in "${CREATED_TESTS[@]}"; do
+    echo "  - $test_key"
+done
+echo ""
+echo "View tests in X-Ray: $JIRA_URL/browse/$TICKET (see linked tests)"
+```
 
 ### Step 5: Summary and Completion
 
 1. **Display completion summary:**
    ```bash
-   echo "✅ Generated $(wc -l < ".xray-tests/$TICKET/created-tests.txt") X-Ray test cases"
+   echo "✅ Generated ${#CREATED_TESTS[@]} X-Ray test cases"
    echo "✅ All tests linked to $TICKET"
    echo "✅ Test format: $TEST_FORMAT"
    echo ""
    echo "Created tests:"
-   while read test_key; do
+   for test_key in "${CREATED_TESTS[@]}"; do
      echo "  - $test_key"
-   done < ".xray-tests/$TICKET/created-tests.txt"
+   done
    ```
 
-2. **Clean up temporary files:**
-   ```bash
-   # Keep only essential files, remove processing artifacts
-   rm -f ".xray-tests/$TICKET/ticket-details.txt" 
-   rm -f ".xray-tests/$TICKET/parsed-acs.txt"
-   rm -f ".xray-tests/$TICKET/payload-*.json"
-   ```
+**Note:** No local files are created. All test cases are generated and created directly in X-Ray.
 
 ## Command Options
 
@@ -373,13 +322,9 @@ done
 
 ## Output Files
 
-```
-.xray-tests/$TICKET/
-├── acceptance-criteria.md       # Extracted ACs from ticket
-├── test-cases-bdd.feature      # Generated BDD test cases (if BDD format)
-├── test-cases-manual.md        # Generated manual test cases (if Manual format)
-└── created-tests.txt           # List of created X-Ray test keys
-```
+**No local files are created.** The command works entirely in memory and creates test cases directly in X-Ray.
+
+The only output is the X-Ray test cases created in your JIRA instance, properly linked to the original ticket.
 
 ## Integration Points
 
@@ -408,17 +353,15 @@ done
    - Fall back to manual AC entry
    - Provide guidance on AC format requirements
 
-4. **Missing Gherkin Content in X-Ray:**
-   - **Issue**: X-Ray test cases show only summary/description but no detailed scenarios
-   - **Cause**: API payload missing `steps.cucumber` content or using wrong endpoint
-   - **Solution**: Ensure complete Gherkin content is included in `steps.cucumber` field
-   - **Verification**: Check X-Ray test case "Steps" tab for Gherkin scenarios
-   - **Manual Fix**: Upload .feature files via X-Ray UI if API fails
+5. **AC Extraction Failures:**
+   - Fall back to manual AC entry if no patterns found
+   - Provide guidance on AC format requirements
 
-5. **Test Case Content Issues:**
-   - **Empty/Minimal Steps**: Verify AC parsing extracted meaningful content
-   - **Format Issues**: Validate Gherkin syntax before API submission  
-   - **Missing Details**: Ensure original ACs contain sufficient detail for test generation
+6. **Missing Content Issues:**
+   - **Issue**: No acceptance criteria found in ticket
+   - **Cause**: Ticket lacks structured AC content
+   - **Solution**: Provide guidance on where to add ACs in ticket
+   - **Manual Fix**: User adds ACs to ticket and re-runs command
 
 ## Example Usage
 
