@@ -8,13 +8,12 @@ dependencies:
   - X-Ray for JIRA (required)
 ---
 
-# Generate X-Ray Test Cases from Acceptance Criteria
+# Generate X-Ray Test Cases from JIRA Tickets
 
 ## Purpose
-This command generates X-Ray test cases directly from a JIRA ticket's acceptance criteria and requirements. It extracts ACs from the ticket, converts them into test case format (BDD or Manual), creates the test cases in X-Ray, and links them back to the original JIRA ticket.
+This command generates X-Ray test cases directly from a JIRA ticket's acceptance criteria. It extracts ACs from the ticket, converts them into test case format (BDD or Manual), and creates the test cases in X-Ray with proper linking back to the original ticket.
 
-**Input:** JIRA ticket number (e.g., PROJ-123)
-**Output:** X-Ray test cases created and linked to the ticket
+**Single Purpose:** Create X-Ray test cases only - no reports, no test executions, no test plans.
 
 ## Prerequisites Check
 
@@ -343,81 +342,32 @@ done
    done < ".xray-tests/$TICKET/created-tests.txt"
    ```
 
-### Step 5: Generate Summary Report
+### Step 5: Summary and Completion
 
-1. **Create execution summary:**
+1. **Display completion summary:**
    ```bash
-   cat > ".xray-tests/$TICKET/generation-report.md" <<EOF
-   # X-Ray Test Generation Report
-   
-   **Ticket:** $TICKET
-   **Summary:** $TICKET_SUMMARY  
-   **Format:** $TEST_FORMAT
-   **Generated:** $(date)
-   
-   ## Test Cases Created
-   $(while read test_key; do
-     echo "- [$test_key]($JIRA_URL/browse/$test_key)"
-   done < ".xray-tests/$TICKET/created-tests.txt")
-   
-   ## Total Statistics
-   - **Total ACs processed:** $AC_COUNT
-   - **Test cases created:** $(wc -l < ".xray-tests/$TICKET/created-tests.txt")
-   - **Format used:** $TEST_FORMAT
-   - **All tests linked to:** $TICKET
-   
-   ## Next Steps
-   1. ✅ Test cases created in X-Ray
-   2. ✅ Tests linked to story $TICKET
-   3. ⏳ Add to Test Execution for sprint testing
-   4. ⏳ Configure automation framework (if BDD format)
-   EOF
+   echo "✅ Generated $(wc -l < ".xray-tests/$TICKET/created-tests.txt") X-Ray test cases"
+   echo "✅ All tests linked to $TICKET"
+   echo "✅ Test format: $TEST_FORMAT"
+   echo ""
+   echo "Created tests:"
+   while read test_key; do
+     echo "  - $test_key"
+   done < ".xray-tests/$TICKET/created-tests.txt"
    ```
 
-2. **Display completion summary:**
-   ```
-   ✅ Generated $(wc -l < ".xray-tests/$TICKET/created-tests.txt") X-Ray test cases from $AC_COUNT acceptance criteria
-   ✅ All tests linked to $TICKET
-   ✅ Test format: $TEST_FORMAT
-   
-   Created tests:
-   $(cat ".xray-tests/$TICKET/created-tests.txt" | while read test_key; do
-     echo "  - $test_key: [View in X-Ray]($JIRA_URL/browse/$test_key)"
-   done)
-   
-   📁 Files generated: .xray-tests/$TICKET/
-   ```
-
-1. **Present summary:**
-   ```
-   ✅ Generated 4 test cases from 4 acceptance criteria
-   Format: BDD (Cucumber)
-   
-   Test Cases Created:
-   - TC-PROJ-001: User login validation
-   - TC-PROJ-002: Dashboard display verification  
-   - TC-PROJ-003: Data export functionality
-   - TC-PROJ-004: Error handling validation
-   
-   Next steps:
-   1. Review tests in X-Ray: [X-Ray URL]
-   2. Add to Test Set: [Suggested Test Set]
-   3. Schedule execution: [Suggested timeline]
-   ```
-
-2. **Ask for final actions:**
-   ```
-   Would you like to:
-   1. Create a Test Set with these tests? (Y/n)
-   2. Schedule test execution? (Y/n) 
-   3. Generate test data templates? (Y/n)
+2. **Clean up temporary files:**
+   ```bash
+   # Keep only essential files, remove processing artifacts
+   rm -f ".xray-tests/$TICKET/ticket-details.txt" 
+   rm -f ".xray-tests/$TICKET/parsed-acs.txt"
+   rm -f ".xray-tests/$TICKET/payload-*.json"
    ```
 
 ## Command Options
 
 - `--format=bdd|manual`: Force specific test case format (default: auto-detect from AC content)
 - `--dry-run`: Generate test cases but don't create in X-Ray (output to files only)
-- `--link-story`: Link generated tests back to the original story (default: true)
 - `--environment=ENV`: Set target test environment in test metadata
 - `--component=COMP`: Override component detection from ticket
 
@@ -425,13 +375,10 @@ done
 
 ```
 .xray-tests/$TICKET/
-├── acceptance-criteria.md       # Extracted and cleaned ACs
+├── acceptance-criteria.md       # Extracted ACs from ticket
 ├── test-cases-bdd.feature      # Generated BDD test cases (if BDD format)
 ├── test-cases-manual.md        # Generated manual test cases (if Manual format)
-├── xray-payload.json           # X-Ray API payloads used
-├── creation-log.txt            # Test creation results and X-Ray IDs
-├── generation-report.md        # Summary report with links
-└── test-plan.json             # Test plan details (if created)
+└── created-tests.txt           # List of created X-Ray test keys
 ```
 
 ## Integration Points
@@ -494,7 +441,6 @@ done
 
 ## Success Metrics
 
-- Number of test cases successfully created in X-Ray
-- Time saved vs manual test case creation
-- Quality of generated test coverage
-- Successful linking between stories and tests
+- Number of X-Ray test cases successfully created
+- Successful linking between X-Ray tests and original JIRA ticket
+- Quality of generated test case content (scenarios/steps)
