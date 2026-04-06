@@ -11,9 +11,11 @@ dependencies:
 # Generate X-Ray Test Cases from JIRA Tickets
 
 ## Purpose
-This command generates X-Ray test cases directly from a JIRA ticket's acceptance criteria. It extracts ACs from the ticket, converts them into test case format (BDD or Manual), and creates the test cases in X-Ray with proper linking back to the original ticket.
+This command generates X-Ray test cases directly from a JIRA ticket's acceptance criteria. It extracts ACs from the ticket, **prompts you to choose BDD or Manual format**, converts them into test cases, and creates the test cases in X-Ray with proper linking back to the original ticket.
 
 **Single Purpose:** Create X-Ray test cases only - no reports, no test executions, no test plans.
+
+**Interactive:** Asks user to choose between BDD (Gherkin) or Manual test format unless `--format` flag is provided.
 
 ## Prerequisites Check
 
@@ -134,18 +136,59 @@ fi
 
 ### Step 2: Determine Test Case Format and Generate Content
 
-1. **Format Selection Logic:**
+**⚡ INTERACTIVE: Ask user for preferred test format**
+
+1. **Prompt User for Format Selection:**
    ```bash
-   if [[ "$FORMAT" == "bdd" ]] || [[ -z "$FORMAT" && -n "$(grep -i 'given.*when.*then' ".xray-tests/$TICKET/acceptance-criteria.md")" ]]; then
-       echo "Using BDD (Gherkin) format"
-       TEST_FORMAT="bdd"
-   elif [[ "$FORMAT" == "manual" ]] || [[ -z "$FORMAT" ]]; then
-       echo "Using Manual test format"
+   # Check if format was provided via command line flag
+   if [[ -z "$FORMAT" ]]; then
+       echo ""
+       echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+       echo "Select Test Case Format:"
+       echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+       echo ""
+       echo "1. BDD (Gherkin) Format"
+       echo "   - Feature/Scenario structure"
+       echo "   - Given/When/Then steps"
+       echo "   - Best for: Behavioral testing, automation"
+       echo ""
+       echo "2. Manual Test Steps"
+       echo "   - Step-by-step instructions"
+       echo "   - Expected results for each step"
+       echo "   - Best for: Manual QA, exploratory testing"
+       echo ""
+       
+       # Use AskQuestion tool for user selection
+       TEST_FORMAT=$(AskQuestion \
+           --id "test_format" \
+           --prompt "Which test case format do you want to use?" \
+           --options "bdd:BDD (Gherkin) Format,manual:Manual Test Steps" \
+           --default "manual")
+       
+       echo ""
+       echo "✅ Selected format: $TEST_FORMAT"
+       echo ""
+   else
+       TEST_FORMAT="$FORMAT"
+       echo "Using format from command line: $TEST_FORMAT"
+   fi
+   ```
+
+2. **Format Selection Logic:**
+   ```bash
+   if [[ "$TEST_FORMAT" == "bdd" ]]; then
+       echo "📝 Will generate BDD (Gherkin) test cases"
+       echo "   Format: Feature → Scenario → Given/When/Then"
+   elif [[ "$TEST_FORMAT" == "manual" ]]; then
+       echo "📝 Will generate Manual test cases"
+       echo "   Format: Objective → Preconditions → Test Steps → Expected Results"
+   else
+       echo "⚠️  Unknown format '$TEST_FORMAT', defaulting to Manual"
        TEST_FORMAT="manual"
    fi
    ```
 
-2. **Generate Test Cases for Each AC:**
+3. **Generate Test Cases for Each AC:**
 
    **For BDD Format:**
    ```gherkin
@@ -381,10 +424,38 @@ echo "   10 ACs: ~1.8s (vs ~11s sequential) - 6x faster!"
 
 ## Command Options
 
-- `--format=bdd|manual`: Force specific test case format (default: auto-detect from AC content)
-- `--dry-run`: Generate test cases but don't create in X-Ray (output to files only)
+- `--format=bdd|manual`: Force specific test case format (skips interactive prompt)
+  - `bdd`: Generate BDD/Gherkin format with Given/When/Then
+  - `manual`: Generate Manual test steps with numbered instructions
+  - If not provided: **Interactive prompt will ask user to choose**
+- `--dry-run`: Generate test cases but don't create in X-Ray (preview only)
 - `--environment=ENV`: Set target test environment in test metadata
 - `--component=COMP`: Override component detection from ticket
+
+## Interactive Mode
+
+**Default Behavior:** If `--format` is not provided, the command will prompt:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Select Test Case Format:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. BDD (Gherkin) Format
+   - Feature/Scenario structure
+   - Given/When/Then steps
+   - Best for: Behavioral testing, automation
+
+2. Manual Test Steps
+   - Step-by-step instructions
+   - Expected results for each step
+   - Best for: Manual QA, exploratory testing
+
+Which test case format do you want to use?
+> 
+```
+
+User selects option, then command proceeds with test generation.
 
 ## Output Files
 
@@ -432,21 +503,50 @@ The only output is the X-Ray test cases created in your JIRA instance, properly 
 ## Example Usage
 
 ```bash
-# Basic usage - extract ACs from ticket and generate X-Ray tests
+# Interactive mode - prompts for format selection
 /generate-xray-tests PROJ-123
+→ Prompt: "Which test case format do you want to use?"
+→ User selects: BDD or Manual
+→ Creates tests in selected format
 
-# Force BDD format
+# Force BDD format (skip prompt)
 /generate-xray-tests PROJ-123 --format=bdd
+→ Creates Gherkin/BDD tests directly
 
-# Force Manual format  
+# Force Manual format (skip prompt)
 /generate-xray-tests PROJ-123 --format=manual
+→ Creates Manual test steps directly
 
-# Dry run to review generated content before creating in X-Ray
+# Dry run to preview before creating (with interactive prompt)
 /generate-xray-tests PROJ-123 --dry-run
+→ Prompt: Select format
+→ Shows preview of tests without creating in X-Ray
+
+# Dry run with specific format
+/generate-xray-tests PROJ-123 --format=bdd --dry-run
+→ Preview BDD tests without creating
 
 # Create tests with specific environment metadata
 /generate-xray-tests PROJ-123 --environment=staging
+→ Interactive format selection
+→ Creates tests tagged with staging environment
 ```
+
+## User Experience Flow
+
+**Without --format flag:**
+1. ✅ Fetch ticket from JIRA
+2. ✅ Extract acceptance criteria
+3. **❓ Ask user: BDD or Manual?**
+4. ✅ Generate tests in selected format
+5. ✅ Create in X-Ray and link to ticket
+
+**With --format flag:**
+1. ✅ Fetch ticket from JIRA
+2. ✅ Extract acceptance criteria
+3. ✅ Use specified format (no prompt)
+4. ✅ Generate tests
+5. ✅ Create in X-Ray and link to ticket
 
 ## Success Metrics
 
