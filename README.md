@@ -25,15 +25,15 @@ Generate X-Ray test cases directly from JIRA tickets with interactive format sel
 ### 1. Clone the Repository
 
 ```bash
-git clone git@github.com:mde-hf/spec-dev-qa-assistant.git
-cd spec-dev-qa-assistant
+git clone https://github.com/SKSA/Xray-test-generation.git
+cd Xray-test-generation
 ```
 
 ### 2. Install to Your Project
 
 ```bash
 cd ~/your-project
-cp -r ~/spec-dev-qa-assistant/.claude .
+cp -r ~/Xray-test-generation/.claude .
 ```
 
 ### 3. Setup Environment Variables

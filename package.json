@@ -22,10 +22,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mde-hf/spec-dev-qa-assistant.git"
+    "url": "git+https://github.com/SKSA/Xray-test-generation.git"
   },
   "bugs": {
-    "url": "https://github.com/mde-hf/spec-dev-qa-assistant/issues"
+    "url": "https://github.com/SKSA/Xray-test-generation/issues"
   },
-  "homepage": "https://github.com/mde-hf/spec-dev-qa-assistant#readme"
+  "homepage": "https://github.com/SKSA/Xray-test-generation#readme"
 }

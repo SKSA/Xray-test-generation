@@ -1,7 +1,7 @@
 # X-Ray Test Generator - Documentation Index
 
 ## 📁 Location
-**Base Directory:** `/Users/sku/Desktop/spec-dev-qa-assistant/`
+**Base Directory:** `/path/to/Xray-test-generation/`
 
 ---
 
@@ -79,7 +79,7 @@ cp -r .claude/commands your-repo/.claude/
 ## 📂 Directory Structure
 
 ```
-/Users/sku/Desktop/spec-dev-qa-assistant/
+/path/to/Xray-test-generation/
 │
 ├── 📖 Documentation
 │   ├── README.md                       # Project overview
@@ -139,5 +139,5 @@ cp -r .claude/commands your-repo/.claude/
 ---
 
 **Created:** April 7, 2026
-**Location:** `/Users/sku/Desktop/spec-dev-qa-assistant/`
+**Location:** `/path/to/Xray-test-generation/`
 **Purpose:** X-Ray test case generation from JIRA acceptance criteria
