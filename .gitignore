@@ -1,10 +1,12 @@
+# X-Ray Test Generator - .gitignore
+
 # System files
 .DS_Store
+Thumbs.db
 *.log
 
 # Dependencies
 node_modules/
-package-lock.json
 
 # Environment & Secrets
 .env
@@ -14,31 +16,32 @@ package-lock.json
 *.pem
 *secret*
 *credentials*
+*api-token*
+jira-config.json
 .claude.json
-config.local.yml
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# Testing artifacts
-.ac-verification/*/
-!.ac-verification/.gitkeep
-test-results/
-playwright-report/
-coverage/
-
-# Build artifacts
-dist/
-build/
-*.tsbuildinfo
-
-# Temp files
+# Temporary files
 temp/
 tmp/
 *.tmp
+*.cache
 
-# Project-specific
-spec-machine/
+# X-Ray Test Generator specific
+# (Currently no project-specific generated files)
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# OS generated files
+.Spotlight-V100
+.Trashes
+ehthumbs.db
