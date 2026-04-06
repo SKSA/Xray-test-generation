@@ -1,12 +1,31 @@
 {
-  "name": "spec-dev-qa-assistant",
-  "version": "1.0.0",
+  "name": "xray-test-generator",
+  "version": "2.2.0",
+  "description": "Automated X-Ray test case generation from JIRA ticket acceptance criteria",
+  "main": ".claude/commands/generate-xray-tests/command.md",
   "scripts": {
-    "test": "playwright test",
-    "test:headed": "playwright test --headed",
-    "test:report": "playwright show-report"
+    "validate": "echo 'X-Ray Test Generator - Ready to use'"
   },
-  "devDependencies": {
-    "@playwright/test": "^1.58.2"
-  }
+  "keywords": [
+    "xray",
+    "jira",
+    "test-cases",
+    "acceptance-criteria",
+    "test-automation",
+    "bdd",
+    "gherkin",
+    "manual-testing",
+    "claude",
+    "ai-testing"
+  ],
+  "author": "HelloFresh QA Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mde-hf/spec-dev-qa-assistant.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mde-hf/spec-dev-qa-assistant/issues"
+  },
+  "homepage": "https://github.com/mde-hf/spec-dev-qa-assistant#readme"
 }
