@@ -1,0 +1,11 @@
+{
+  "name": "hello-world",
+  "description": "Example plugin demonstrating the HelloFresh Claude plugin structure",
+  "version": "1.0.0",
+  "author": {
+    "name": "squad-engineering-productivity",
+    "email": "engineering-productivity@hellofresh.com",
+    "tribe": "productivity-platform",
+    "squad": "engineering-productivity"
+  }
+}

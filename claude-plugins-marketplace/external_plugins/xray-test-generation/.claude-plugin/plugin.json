@@ -1,0 +1,20 @@
+{
+  "name": "xray-test-generation",
+  "description": "Generate X-Ray test cases from JIRA ticket acceptance criteria with interactive format selection and parallel processing",
+  "version": "2.2.0",
+  "author": {
+    "name": "squad-quality-engineering",
+    "email": "qa-team@hellofresh.com",
+    "tribe": "platform-engineering",
+    "squad": "quality-engineering"
+  },
+  "dependencies": {
+    "jira-cli": "required - Install with: brew install ankitpokhrel/jira-cli/jira-cli",
+    "xray-jira": "required - X-Ray for JIRA must be enabled in your JIRA instance",
+    "curl": "required - For X-Ray REST API calls",
+    "jq": "required - For JSON processing"
+  },
+  "keywords": ["xray", "jira", "testing", "test-cases", "automation", "bdd", "gherkin", "acceptance-criteria"],
+  "categories": ["testing", "jira-integration", "automation"],
+  "license": "MIT"
+}
